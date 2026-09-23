@@ -5,7 +5,7 @@
  * Emits N screen packages from the template's `src/sim-screen/` prototype
  * (fleet folder naming: `src/intro/`, not `intro-screen/`), wires main.ts,
  * StringManager, locale JSON, and a stub `{Prefix}ScreenIcons.ts` module, then
- * repoints CLAUDE.md / README.md / doc/*.md at the emitted screens.
+ * repoints AGENTS.md / README.md / doc/*.md at the emitted screens.
  *
  * Run after `npm run rename` (create-sim always does both). Safe on a pristine
  * template too (prefix stays `Sim`).
@@ -518,7 +518,7 @@ function updateDocs(screens: ScreenSpec[], simPrefix: string): void {
     return;
   }
   const docDir = join(ROOT, "doc");
-  const paths = [join(ROOT, "CLAUDE.md"), join(ROOT, "README.md")];
+  const paths = [join(ROOT, "AGENTS.md"), join(ROOT, "README.md")];
   if (existsSync(docDir)) {
     for (const entry of readdirSync(docDir)) {
       if (entry.endsWith(".md")) {

@@ -18,7 +18,7 @@ updates:
     ignore:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
-      # Forced in package.json overrides (see each repo's CLAUDE.md → package.json overrides).
+      # Forced in package.json overrides (see each repo's AGENTS.md → package.json overrides).
       # Dependabot PRs would fight the pin / reopen known-accepted risk.
       - dependency-name: "lodash"
       - dependency-name: "three"

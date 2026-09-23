@@ -1,7 +1,7 @@
-# CLAUDE.md — Interferometry Lab
+# AGENTS.md — Interferometry Lab
 
 Sim-specific context for AI assistants. General SceneryStack guidance:
-[OpenLyceum/.github/CLAUDE.md](https://github.com/OpenLyceum/.github/blob/main/CLAUDE.md).
+[OpenLyceum/.github/AGENTS.md](https://github.com/OpenLyceum/.github/blob/main/AGENTS.md).
 Fleet structure rules: [Baton/CONVENTIONS.md](https://github.com/OpenLyceum/Baton/blob/main/CONVENTIONS.md).
 
 ## Project
