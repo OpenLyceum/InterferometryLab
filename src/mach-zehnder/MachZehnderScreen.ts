@@ -7,7 +7,7 @@
  *
  * Registered in the screens array in src/main.ts. Its home-screen and navigation-bar
  * icons come from createMachZehnderIcon() in src/common/InterferometryLabScreenIcons.ts
- * (see doc/multi-screen.md).
+ * (see SceneryStackTemplate doc/multi-screen.md).
  */
 import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import type { ScreenOptions } from "scenerystack/sim";
