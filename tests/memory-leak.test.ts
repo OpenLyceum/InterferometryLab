@@ -24,29 +24,7 @@ import type { PhotonMark } from "../src/mach-zehnder/model/MachZehnderModel.js";
 import { PhotonMarksNode } from "../src/mach-zehnder/view/PhotonMarksNode.js";
 import { MichelsonModel } from "../src/michelson/model/MichelsonModel.js";
 import { CoherenceEnvelopeNode } from "../src/michelson/view/CoherenceEnvelopeNode.js";
-
-/**
- * Force garbage collection with multiple passes, stopping as soon as `collected`
- * reports success. The setTimeout(0) yield after a live check avoids the WeakRef
- * macrotask-liveness pin.
- *
- * Bailing out early matters: a full gc() pass costs seconds here, so a loop that
- * always runs to completion takes long enough to trip the suite's timeout even
- * when nothing has leaked.
- */
-async function forceGC(collected?: () => boolean): Promise<void> {
-  for (let i = 0; i < 15; i++) {
-    globalThis.gc?.();
-    await new Promise<void>((r) => setTimeout(r, 50));
-    if (collected === undefined) {
-      return;
-    }
-    if (collected()) {
-      return;
-    }
-    await new Promise<void>((r) => setTimeout(r, 0));
-  }
-}
+import { describeDisposalLeaks, forceGC } from "./helpers/memoryLeak.js";
 
 function createAndDisposeTimeModel(): WeakRef<object> {
   const model = new TimeModel();
@@ -99,19 +77,9 @@ function createAndDisposeCoherenceEnvelopeNode(model: MichelsonModel): WeakRef<o
 }
 
 describe("Memory leak regression", () => {
-  it("global.gc is available (--expose-gc)", () => {
-    expect(globalThis.gc).toBeDefined();
-  });
-
-  it("sanity: plain object is collected", async () => {
-    const ref = (() => new WeakRef({ hello: "world" }))();
-    await forceGC(() => ref.deref() === undefined);
-    expect(ref.deref()).toBeUndefined();
-  });
-
   it("TimeModel is collected after dispose", async () => {
     const ref = createAndDisposeTimeModel();
-    await forceGC(() => ref.deref() === undefined);
+    await forceGC(ref);
     expect(ref.deref()).toBeUndefined();
   });
 
@@ -126,7 +94,7 @@ describe("Memory leak regression", () => {
     for (let i = 0; i < 10; i++) {
       refs.push(createAndDisposeTimeModel());
     }
-    await forceGC(() => refs.every((r) => r.deref() === undefined));
+    await forceGC(refs);
     const survivors = refs.filter((r) => r.deref() !== undefined).length;
     expect(survivors).toBe(0);
   });
@@ -143,7 +111,7 @@ describe("Memory leak regression", () => {
   it("FringePatternNode is collected after dispose", async () => {
     const specProperty = new Property<FringeSpec>(makeSpec());
     const ref = createAndDisposeFringePatternNode(specProperty);
-    await forceGC(() => ref.deref() === undefined);
+    await forceGC(ref);
     expect(ref.deref()).toBeUndefined();
   });
 
@@ -159,7 +127,7 @@ describe("Memory leak regression", () => {
   it("PhotonMarksNode is collected after dispose", async () => {
     const revisionProperty = new NumberProperty(0);
     const ref = createAndDisposePhotonMarksNode(revisionProperty);
-    await forceGC(() => ref.deref() === undefined);
+    await forceGC(ref);
     expect(ref.deref()).toBeUndefined();
   });
 
@@ -178,7 +146,7 @@ describe("Memory leak regression", () => {
   it("IntensityProfileNode is collected after dispose", async () => {
     const specProperty = new Property<FringeSpec>(makeSpec());
     const ref = createAndDisposeIntensityProfileNode(specProperty);
-    await forceGC(() => ref.deref() === undefined);
+    await forceGC(ref);
     expect(ref.deref()).toBeUndefined();
   });
 
@@ -192,8 +160,10 @@ describe("Memory leak regression", () => {
   it("CoherenceEnvelopeNode is collected after dispose, with its model still alive", async () => {
     const model = new MichelsonModel();
     const ref = createAndDisposeCoherenceEnvelopeNode(model);
-    await forceGC(() => ref.deref() === undefined);
+    await forceGC(ref);
     expect(ref.deref()).toBeUndefined();
     expect(model.pathDifferenceProperty.value).toBeDefined();
   });
 });
+
+describeDisposalLeaks([{ name: "TimeModel", create: () => new TimeModel(), idempotentDispose: true }]);
