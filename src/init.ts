@@ -12,18 +12,20 @@
  *
  * ── How to customize ─────────────────────────────────────────────────────────
  * 1. Change `name` to match your package.json "name" field (kebab-case)
- * 2. Change `version` to match your package.json "version" field
+ * 2. `version` is read from package.json — bump it there (`npm version`), never here
  * 3. Update `availableLocales` when you add new translation files
  */
 import { init, madeWithSceneryStackSplashDataURI } from "scenerystack/init";
+import { version } from "../package.json";
 
 init({
   // Internal identifier used by SceneryStack for URL parameters and phetmarks.
   // Use kebab-case matching the package.json "name" field.
   name: "interferometry-lab",
 
-  // Displayed in the About dialog (Help menu → About).
-  version: "0.0.0",
+  // Displayed in the About dialog (Help menu → About). Single source of truth is
+  // package.json, so `npm version` / `npm run release` can never leave it stale.
+  version,
 
   // Must match the id registered in src/brand.ts.
   brand: "made-with-scenerystack",

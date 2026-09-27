@@ -6,6 +6,10 @@
  *
  * Replace public/screenshots/{wide,narrow}.png with real sim shots before shipping
  * (e.g. Baton/scripts/generate-screenshots.sh → copy into public/screenshots/).
+ *
+ * Template-owned: keep identical across the fleet. The background colour comes from
+ * the `theme-color` meta in index.html (which must also match the manifest
+ * `theme_color`), so nothing here is sim-specific.
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -18,8 +22,19 @@ const here = dirname(fileURLToPath(import.meta.url));
 const publicDir = resolve(here, "..", "public");
 const svg = readFileSync(resolve(publicDir, "icons", "icon.svg"));
 
-/** Theme background matching `theme_color` / icon.svg fill (`#1a1a2e`). */
-const THEME_BG = { r: 26, g: 26, b: 46, alpha: 1 };
+/** Parse the `<meta name="theme-color">` value from index.html into an RGBA background. */
+const readThemeBackground = (): { r: number; g: number; b: number; alpha: number } => {
+  const html = readFileSync(resolve(here, "..", "index.html"), "utf8");
+  const match = /<meta\s+name="theme-color"\s+content="#([0-9a-fA-F]{6})"/.exec(html);
+  if (!match?.[1]) {
+    throw new Error('index.html must declare <meta name="theme-color" content="#rrggbb">');
+  }
+  const n = Number.parseInt(match[1], 16);
+  return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff, alpha: 1 };
+};
+
+/** Theme background matching index.html `theme-color` / manifest `theme_color`. */
+const THEME_BG = readThemeBackground();
 
 const density = 512;
 

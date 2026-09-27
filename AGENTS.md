@@ -134,7 +134,7 @@ of being locked in. Keep that property when adding tests.
 npm run lint && npm run check && npm run build && npm test
 ```
 
-`npm run release` intentionally skips `npm test` in some sims — append `&& npm test` before the version bump so a release cannot ship a failing suite.
+`npm run release` runs `npm test` before the version bump, and `src/init.ts` reads `version` from `package.json`, so the About dialog always matches the release.
 
 | Command | Description |
 |---|---|

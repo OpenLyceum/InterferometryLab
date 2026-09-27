@@ -19,20 +19,13 @@ const securityHeaders: Record<string, string> = {
     // Function/eval for query-parameter parsing — reopen a CSP audit then.
     // 'unsafe-eval' is required for SceneryStack query parameter parsing
     "script-src 'self' 'unsafe-eval'",
-    // Event-handler attributes are governed separately from inline <script>
-    // elements, and only the two handlers SceneryStack itself writes are allowed
-    // here. ParallelDOM.pdomInputEnabledListener sets an inline `onclick` on any
-    // control whose input it disables — `return false` while disabled, and `""`
-    // when it is enabled again — to stop a disabled element toggling its own
-    // native state. The play/pause group's step button does this every time the
-    // clock starts or stops.
-    //
-    // 'unsafe-hashes' is what makes a hash apply to an event handler at all.
-    // Anything other than these two exact handlers still fails the policy, and
-    // inline <script> remains blocked by script-src above.
-    //
-    // Left unhandled this is not merely noise: the fuzz suite fails any run that
-    // logs a console error.
+    // Event-handler attributes are governed by script-src-attr, separately from
+    // inline <script>. SceneryStack's ParallelDOM.pdomInputEnabledListener sets an
+    // inline `onclick` on any control whose input it disables (`return false`, then
+    // `""` when re-enabled) — e.g. the time-control step button whenever the clock
+    // starts or stops. 'unsafe-hashes' lets exactly those two handlers through;
+    // anything else still fails. Without it the fuzz suite fails on the CSP console
+    // error. Regenerate: printf 'return false' | openssl dgst -sha256 -binary | base64
     "script-src-attr 'unsafe-hashes' " +
       "'sha256-GZIcz60Uwd6wT3vaYke/atSr53TehbYAPepOa3d03Vw=' " +
       "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",

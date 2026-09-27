@@ -5,8 +5,9 @@
  * happy-dom does not provide working versions, so we patch in minimal mocks
  * before any scenerystack code loads, then call init() once for the suite.
  *
- * This is the canonical test setup for OpenLyceum sims — copy it as-is when
- * forking the template, changing only the `name` passed to init() below.
+ * Template-owned: identical across the fleet except the `name` passed to init()
+ * (Baton check-template-drift substitutes it). Extend mocks in the template, or
+ * record a sim-specific variant under AGENTS.md → "Compliance carve-outs".
  */
 
 // ── shared no-op helpers ─────────────────────────────────────────────────────
@@ -97,7 +98,7 @@ function createMockContext2D(): CanvasRenderingContext2D {
 // ── Web Audio mock ───────────────────────────────────────────────────────────
 class MockAudioContext {
   readonly sampleRate = 44100;
-  readonly state = "running" as AudioContextState;
+  readonly state: AudioContextState = "running";
   readonly destination = {} as AudioDestinationNode;
   createGain(): GainNode {
     return {
@@ -141,22 +142,49 @@ class MockAudioContext {
 (globalThis as Record<string, unknown>)["AudioContext"] = MockAudioContext;
 (globalThis as Record<string, unknown>)["webkitAudioContext"] = MockAudioContext;
 
+// ── Web Worker mock ──────────────────────────────────────────────────────────
+// happy-dom has no Worker. Models that construct one as a field initializer
+// (e.g. an OpenCV or physics worker) still need the constructor to exist.
+// Messages are swallowed: a real worker cannot run under happy-dom anyway.
+class MockWorker {
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
+  postMessage: () => void = noop;
+  terminate: () => void = noop;
+  addEventListener: () => void = noop;
+  removeEventListener: () => void = noop;
+  dispatchEvent: () => boolean = () => false;
+}
+if (typeof globalThis.Worker === "undefined") {
+  (globalThis as Record<string, unknown>)["Worker"] = MockWorker;
+}
+
 // ── patch getContext("2d") before any scenerystack import ────────────────────
-const origGetContext: typeof HTMLCanvasElement.prototype.getContext = HTMLCanvasElement.prototype.getContext;
+// Also pins getContext("webgpu") to null: happy-dom has no WebGPU, so code with a
+// WebGPU path exercises its unsupported branch deterministically.
+//
+// `origGetContext` is narrowed to a single loose signature before delegating —
+// its real type is a large overload union (widened further by @webgpu/types),
+// and a spread argument cannot be applied to an overload union.
+type LooseGetContext = (this: HTMLCanvasElement, contextId: string, ...args: unknown[]) => unknown;
+const origGetContext = HTMLCanvasElement.prototype.getContext as unknown as LooseGetContext;
 HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, contextId: string, ...args: unknown[]) {
   if (contextId === "2d") {
     const ctx = createMockContext2D();
     (ctx as unknown as Record<string, unknown>)["canvas"] = this;
-    return ctx as unknown as ReturnType<typeof origGetContext>;
+    return ctx;
   }
-  return origGetContext.call(this, contextId, ...args) as ReturnType<typeof origGetContext>;
-} as typeof origGetContext;
+  if (contextId === "webgpu") {
+    return null;
+  }
+  return origGetContext.call(this, contextId, ...args);
+} as typeof HTMLCanvasElement.prototype.getContext;
 
 // ── SceneryStack init ────────────────────────────────────────────────────────
 import { init, madeWithSceneryStackSplashDataURI } from "scenerystack/init";
 
 init({
-  // Change to match your package.json "name" when forking the template.
+  // Must match the package.json "name" (and the name in src/init.ts).
   name: "interferometry-lab",
   version: "1.0.0-test",
   brand: "made-with-scenerystack",
