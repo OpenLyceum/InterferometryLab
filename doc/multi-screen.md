@@ -25,10 +25,10 @@ npm run scaffold-screens -- --screens Intro,Lab --shared-model
 
 The scaffolder:
 
-1. Copies the `michelson/` prototype into `src/<kebab>/` per screen
+1. Copies the `sim-screen/` prototype into `src/<kebab>/` per screen
 2. Writes `src/common/{Prefix}ScreenIcons.ts` stubs and wires icons on each Screen
 3. Updates `main.ts`, locale JSON (`screens` + nested `a11y`), and `StringManager`
-4. Removes the prototype `michelson/` folder
+4. Removes the prototype `sim-screen/` folder
 
 Then always:
 
