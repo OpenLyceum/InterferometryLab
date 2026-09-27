@@ -14,6 +14,9 @@
  *
  * Extra Playwright args pass through:
  *   npm run test:fuzz -- 60 --headed
+ *
+ * Only the fuzz smoke (tests/fuzz/) runs unless a spec path or filter is given; other
+ * Playwright specs live in tests/browser/ and run with `npx playwright test tests/browser`.
  */
 import { spawnSync } from "node:child_process";
 
@@ -55,7 +58,10 @@ const parseArgs = (argv: string[]): { duration: string; extra: string[] } => {
 
 const { duration, extra } = parseArgs(process.argv.slice(2));
 
-const result = spawnSync("playwright", ["test", "--project=chromium", ...extra], {
+// Default to the fuzz smoke; a positional spec path/filter (anything not starting with "-") overrides it.
+const targets = extra.some((arg) => !arg.startsWith("-")) ? [] : ["tests/fuzz/"];
+
+const result = spawnSync("playwright", ["test", "--project=chromium", ...targets, ...extra], {
   stdio: "inherit",
   env: { ...process.env, FUZZ_DURATION: duration },
 });

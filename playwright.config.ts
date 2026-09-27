@@ -1,5 +1,6 @@
 /**
- * Playwright configuration for the optional fuzz smoke (tests/fuzz/).
+ * Playwright configuration for browser tests: the fuzz smoke (tests/fuzz/, run by
+ * `npm run test:fuzz`) and any sim-specific specs (tests/browser/).
  *
  * Template-owned: keep identical across the fleet (Baton check-template-drift).
  * FUZZ_DURATION (seconds) sizes the timeout; FUZZ_PORT (default 5173) lets
@@ -12,7 +13,8 @@ const port = Math.max(1, parseInt(process.env["FUZZ_PORT"] || "5173", 10) || 517
 const fuzzSeconds = Math.max(1, parseInt(process.env["FUZZ_DURATION"] || "30", 10) || 30);
 
 export default defineConfig({
-  testDir: "./tests/fuzz",
+  testDir: "./tests",
+  testMatch: "**/*.spec.ts",
   timeout: (fuzzSeconds + 120) * 1000,
   expect: {
     timeout: 10_000,
