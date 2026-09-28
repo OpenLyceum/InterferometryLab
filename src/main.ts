@@ -37,16 +37,19 @@ onReadyToLaunch(() => {
 
   const screens = [
     new MichelsonScreen(simPreferences, {
+      // The screen name Property updates automatically when the locale changes
       name: stringManager.getScreenNames().michelsonStringProperty,
       tandem: Tandem.ROOT.createTandem("michelsonScreen"),
       backgroundColorProperty: InterferometryLabColors.backgroundColorProperty,
     }),
     new MachZehnderScreen(simPreferences, {
+      // The screen name Property updates automatically when the locale changes
       name: stringManager.getScreenNames().machZehnderStringProperty,
       tandem: Tandem.ROOT.createTandem("machZehnderScreen"),
       backgroundColorProperty: InterferometryLabColors.backgroundColorProperty,
     }),
     new FabryPerotScreen(simPreferences, {
+      // The screen name Property updates automatically when the locale changes
       name: stringManager.getScreenNames().fabryPerotStringProperty,
       tandem: Tandem.ROOT.createTandem("fabryPerotScreen"),
       backgroundColorProperty: InterferometryLabColors.backgroundColorProperty,
