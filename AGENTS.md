@@ -14,7 +14,7 @@ Read [`doc/model.md`](doc/model.md) before changing any physics, and
 [`doc/implementation-notes.md`](doc/implementation-notes.md) before changing the renderer or the
 colour pipeline. Both are current and specific; they are not stubs.
 
-## The one abstraction to understand first
+### The one abstraction to understand first
 
 `src/common/model/FringeSpec.ts` is the contract between every screen model and the single
 renderer. A model reduces its whole optical layout to a `FringeSpec`; `FringePatternNode`
@@ -48,29 +48,9 @@ branches to the renderer.
 | `src/common/view/InterferometryLabNumberControl.ts` | Themed slider; requires an accessible name and explicit keyboard steps |
 | `src/{michelson,mach-zehnder,fabry-perot}/` | One folder per screen, `model/` + `view/` |
 
-## Things that will bite you
+## Model
 
-- **Every optical length in the model is in nanometres.** Controls that read µm or mm use
-  `UnitConversionProperty` at the view boundary (Michelson coarse stage, Fabry-Pérot spacing).
-  Do not introduce mixed units into the model.
-- **Do not sum colours in sRGB.** Use `spectralColor.ts`. Adding gamma-encoded values is not
-  adding light, and averaging per-wavelength sRGB across the visible band gives yellow-green, not
-  white. This was a real bug, fixed; see the implementation notes.
-- **A Michelson arm is traversed twice.** Mirror travel `x` gives path difference `2x`; a gas
-  cell of length `L` gives `2L(n−1)`. Missing the factor of two halves every fringe count.
-- **Contrast and visibility are different things.** `spec.contrast` is a blanket multiplier
-  (which-path marker, alignment loss). The source's coherence envelope is computed per spectral
-  group inside the renderer from that group's own path difference. Both multiply.
-- **Zero path difference with parallel mirrors shows a single flat tone, not fringes.** That is
-  correct. `opdSpread()` exists so the a11y description says so rather than claiming rings.
-- **Fringe counts are derived from a reference, never accumulated**, so they cannot drift.
-- **A chart node must dispose every Property it created**, not just its `Multilink`. The
-  formatter Properties behind an `accessibleParagraph` each link a model Property of their own, so
-  leaving them alive keeps the node reachable from a model that outlives it. `tests/memory-leak.test.ts`
-  catches this; it caught it once already.
-- **The analysis charts pad their value axis** past what the physics can reach, because the traces
-  that matter most are flat ones (a dark port at 0, a constant total at 1, a laser's visibility at
-  1). Against the frame those look like an empty chart.
+Physics and behavior: `doc/model.md`.
 
 ## Accessibility
 
@@ -149,3 +129,29 @@ npm run lint && npm run check && npm run build && npm test
 
 Use `?screens=1`, `?screens=2`, `?screens=3` to open a single screen directly — much faster than
 clicking through the home screen when checking a change.
+
+## Development notes
+
+### Things that will bite you
+
+- **Every optical length in the model is in nanometres.** Controls that read µm or mm use
+  `UnitConversionProperty` at the view boundary (Michelson coarse stage, Fabry-Pérot spacing).
+  Do not introduce mixed units into the model.
+- **Do not sum colours in sRGB.** Use `spectralColor.ts`. Adding gamma-encoded values is not
+  adding light, and averaging per-wavelength sRGB across the visible band gives yellow-green, not
+  white. This was a real bug, fixed; see the implementation notes.
+- **A Michelson arm is traversed twice.** Mirror travel `x` gives path difference `2x`; a gas
+  cell of length `L` gives `2L(n−1)`. Missing the factor of two halves every fringe count.
+- **Contrast and visibility are different things.** `spec.contrast` is a blanket multiplier
+  (which-path marker, alignment loss). The source's coherence envelope is computed per spectral
+  group inside the renderer from that group's own path difference. Both multiply.
+- **Zero path difference with parallel mirrors shows a single flat tone, not fringes.** That is
+  correct. `opdSpread()` exists so the a11y description says so rather than claiming rings.
+- **Fringe counts are derived from a reference, never accumulated**, so they cannot drift.
+- **A chart node must dispose every Property it created**, not just its `Multilink`. The
+  formatter Properties behind an `accessibleParagraph` each link a model Property of their own, so
+  leaving them alive keeps the node reachable from a model that outlives it. `tests/memory-leak.test.ts`
+  catches this; it caught it once already.
+- **The analysis charts pad their value axis** past what the physics can reach, because the traces
+  that matter most are flat ones (a dark port at 0, a constant total at 1, a laser's visibility at
+  1). Against the frame those look like an empty chart.
