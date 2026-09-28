@@ -4,7 +4,6 @@
  * Model for the simulation-specific preferences shown in Preferences →
  * Simulation. Each preference Property takes its initial value from the
  * corresponding query parameter in interferometryLabQueryParameters.
- *
  */
 
 import { BooleanProperty } from "scenerystack/axon";
