@@ -1,7 +1,7 @@
 import type { Plugin, Rollup } from "vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
-import { description, name } from "./package.json";
+import { description, name } from "./package.json" with { type: "json" };
 
 /**
  * Security headers required for:
