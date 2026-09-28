@@ -1,11 +1,5 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true,
-    "defaultBranch": "main"
-  },
   "assist": {
     "actions": {
       "source": {
@@ -13,105 +7,31 @@
       }
     }
   },
+  "files": {
+    "includes": ["**/*.ts", "**/*.js", "**/*.json", "**/*.html", "!dist", "!node_modules", "!.claude"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "javascript": {
+    "formatter": {
+      "arrowParentheses": "always",
+      "bracketSameLine": false,
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended",
-      "nursery": {
-        "useExplicitType": "warn"
-      },
-      "correctness": {
-        "preset": "recommended",
-        "noUnusedImports": "error",
-        "noUnusedVariables": "error",
-        "noUnusedPrivateClassMembers": "error",
-        "noUndeclaredVariables": "error",
-        "noUnreachable": "error",
-        "noInvalidUseBeforeDeclaration": "error"
-      },
-      "style": {
-        "preset": "recommended",
-        "noDefaultExport": "off",
-        "noParameterAssign": "error",
-        "useBlockStatements": "error",
-        "useCollapsedElseIf": "warn",
-        "useConsistentBuiltinInstantiation": "error",
-        "useDefaultParameterLast": "error",
-        "useExplicitLengthCheck": "warn",
-        "useForOf": "warn",
-        "useImportType": "error",
-        "useShorthandAssign": "warn",
-        "useShorthandFunctionType": "warn",
-        "useThrowNewError": "error",
-        "useThrowOnlyError": "error",
-        "noCommonJs": "error",
-        "noExportedImports": "warn",
-        "useNamingConvention": {
-          "level": "warn",
-          "options": {
-            "strictCase": false,
-            "conventions": [
-              {
-                "selector": {
-                  "kind": "variable"
-                },
-                "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"]
-              },
-              {
-                "selector": {
-                  "kind": "function"
-                },
-                "formats": ["camelCase", "PascalCase"]
-              },
-              {
-                "selector": {
-                  "kind": "typeLike"
-                },
-                "formats": ["PascalCase"]
-              },
-              {
-                "selector": {
-                  "kind": "enumMember"
-                },
-                "formats": ["CONSTANT_CASE", "PascalCase"]
-              },
-              {
-                "selector": {
-                  "kind": "objectLiteralProperty"
-                },
-                "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"]
-              }
-            ]
-          }
-        },
-        "useFilenamingConvention": {
-          "level": "warn",
-          "options": {
-            "requireAscii": true,
-            "strictCase": false,
-            "filenameCases": ["PascalCase", "camelCase", "kebab-case"]
-          }
-        },
-        "useSpreadOverApply": "warn"
-      },
-      "suspicious": {
-        "preset": "recommended",
-        "noConsole": "warn",
-        "noEmptyBlockStatements": "error",
-        "noExplicitAny": "error",
-        "useAwait": "error",
-        "useErrorMessage": "error",
-        "useGuardForIn": "error",
-        "useIsArray": "error",
-        "noIrregularWhitespace": "off",
-        "noShadow": "error",
-        "noEqualsToNull": "error",
-        "noReturnAssign": "error",
-        "useArraySortCompare": "error"
+      "a11y": {
+        "preset": "recommended"
       },
       "complexity": {
-        "preset": "recommended",
-        "useLiteralKeys": "off",
         "noExcessiveCognitiveComplexity": {
           "level": "warn",
           "options": {
@@ -123,36 +43,119 @@
         "noUselessStringConcat": "error",
         "noUselessUndefinedInitialization": "error",
         "noVoid": "error",
+        "preset": "recommended",
+        "useArrayFind": "warn",
         "useArrowFunction": "warn",
         "useDateNow": "error",
         "useFlatMap": "warn",
-        "useSimplifiedLogicExpression": "warn",
-        "useArrayFind": "warn"
+        "useLiteralKeys": "off",
+        "useSimplifiedLogicExpression": "warn"
+      },
+      "correctness": {
+        "noInvalidUseBeforeDeclaration": "error",
+        "noUndeclaredVariables": "error",
+        "noUnreachable": "error",
+        "noUnusedImports": "error",
+        "noUnusedPrivateClassMembers": "error",
+        "noUnusedVariables": "error",
+        "preset": "recommended"
+      },
+      "nursery": {
+        "useExplicitType": "warn"
       },
       "performance": {
-        "preset": "recommended",
         "noAccumulatingSpread": "warn",
         "noBarrelFile": "off",
         "noDelete": "warn",
-        "noReExportAll": "off"
-      },
-      "a11y": {
+        "noReExportAll": "off",
         "preset": "recommended"
       },
+      "preset": "recommended",
       "security": {
+        "noGlobalEval": "error",
+        "preset": "recommended"
+      },
+      "style": {
+        "noCommonJs": "error",
+        "noDefaultExport": "off",
+        "noExportedImports": "warn",
+        "noParameterAssign": "error",
         "preset": "recommended",
-        "noGlobalEval": "error"
+        "useBlockStatements": "error",
+        "useCollapsedElseIf": "warn",
+        "useConsistentBuiltinInstantiation": "error",
+        "useDefaultParameterLast": "error",
+        "useExplicitLengthCheck": "warn",
+        "useFilenamingConvention": {
+          "level": "warn",
+          "options": {
+            "filenameCases": ["PascalCase", "camelCase", "kebab-case"],
+            "requireAscii": true,
+            "strictCase": false
+          }
+        },
+        "useForOf": "warn",
+        "useImportType": "error",
+        "useNamingConvention": {
+          "level": "warn",
+          "options": {
+            "conventions": [
+              {
+                "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"],
+                "selector": {
+                  "kind": "variable"
+                }
+              },
+              {
+                "formats": ["camelCase", "PascalCase"],
+                "selector": {
+                  "kind": "function"
+                }
+              },
+              {
+                "formats": ["PascalCase"],
+                "selector": {
+                  "kind": "typeLike"
+                }
+              },
+              {
+                "formats": ["CONSTANT_CASE", "PascalCase"],
+                "selector": {
+                  "kind": "enumMember"
+                }
+              },
+              {
+                "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"],
+                "selector": {
+                  "kind": "objectLiteralProperty"
+                }
+              }
+            ],
+            "strictCase": false
+          }
+        },
+        "useShorthandAssign": "warn",
+        "useShorthandFunctionType": "warn",
+        "useSpreadOverApply": "warn",
+        "useThrowNewError": "error",
+        "useThrowOnlyError": "error"
+      },
+      "suspicious": {
+        "noConsole": "warn",
+        "noEmptyBlockStatements": "error",
+        "noEqualsToNull": "error",
+        "noExplicitAny": "error",
+        "noIrregularWhitespace": "off",
+        "noReturnAssign": "error",
+        "noShadow": "error",
+        "preset": "recommended",
+        "useArraySortCompare": "error",
+        "useAwait": "error",
+        "useErrorMessage": "error",
+        "useGuardForIn": "error",
+        "useIsArray": "error"
       }
     }
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 120
-  },
-  "files": {
-    "includes": ["**/*.ts", "**/*.js", "**/*.json", "**/*.html", "!dist", "!node_modules", "!.claude"]
   },
   "overrides": [
     {
@@ -175,11 +178,11 @@
           "nursery": {
             "useExplicitType": "off"
           },
-          "suspicious": {
-            "noConsole": "off"
-          },
           "style": {
             "noCommonJs": "off"
+          },
+          "suspicious": {
+            "noConsole": "off"
           }
         }
       }
@@ -198,13 +201,10 @@
       }
     }
   ],
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "double",
-      "semicolons": "always",
-      "trailingCommas": "all",
-      "arrowParentheses": "always",
-      "bracketSameLine": false
-    }
+  "vcs": {
+    "clientKind": "git",
+    "defaultBranch": "main",
+    "enabled": true,
+    "useIgnoreFile": true
   }
 }
