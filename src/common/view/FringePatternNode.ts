@@ -5,10 +5,9 @@
  *
  * ── How it draws ──────────────────────────────────────────────────────────────
  * The intensity field is evaluated on a square sample grid, written into an
- * ImageData, and then drawn by this CanvasNode scaled up to the node's size
- * with smoothing on. The grid is coarser than the node so that the expensive
- * part — the physics — runs at a fixed cost regardless of how large the
- * detector is drawn.
+ * ImageData, and then drawn scaled up to the node's size with smoothing on. The
+ * grid is coarser than the node so that the expensive part — the physics — runs
+ * at a fixed cost regardless of how large the detector is drawn.
  *
  * The loops run pixel-outer, group-inner, over a plan built once per repaint.
  * Path difference depends only on position, so it is computed once per pixel and
@@ -76,11 +75,15 @@ export class FringePatternNode extends CanvasNode {
   private readonly size: number;
   private readonly specListener: () => void;
 
-  /** Coarse sample grid. Scaled onto the detector with a bilinear blit in paintCanvas. */
+  /**
+   * Offscreen canvas holding the sampled pattern, scaled up when drawn. It must
+   * stay: putImageData ignores the canvas transform, so writing the samples
+   * straight into the scenery context lands them at the top-left of the whole
+   * display instead of inside the detector. drawImage respects the transform.
+   */
+  private sampleCanvas: HTMLCanvasElement | null = null;
+  private sampleContext: CanvasRenderingContext2D | null = null;
   private imageData: ImageData | null = null;
-
-  /** Full-size buffer filled from the sample grid so paintCanvas can putImageData. */
-  private displayData: ImageData | null = null;
 
   /** Side length of the current sample grid. */
   private sampleCount = 0;
@@ -107,60 +110,16 @@ export class FringePatternNode extends CanvasNode {
    */
   private prepareBuffers(groupCount: number): void {
     const wanted = groupCount > BROADBAND_GROUP_THRESHOLD ? FRINGE_SAMPLES_BROADBAND : FRINGE_SAMPLES_MONOCHROMATIC;
-    if (this.sampleCount === wanted && this.imageData) {
+    if (this.sampleCount === wanted && this.sampleContext && this.imageData) {
       return;
     }
 
     this.sampleCount = wanted;
-    this.imageData = new ImageData(wanted, wanted);
-  }
-
-  /**
-   * Copies the sample grid onto the detector with bilinear filtering.
-   * putImageData ignores the scenery transform, so the scale happens here
-   * rather than through a second canvas.
-   */
-  private blitSmoothed(context: CanvasRenderingContext2D, source: ImageData): void {
-    const size = Math.round(this.size);
-    const n = source.width;
-    if (n === size) {
-      context.putImageData(source, 0, 0);
-      return;
-    }
-
-    if (!this.displayData || this.displayData.width !== size) {
-      this.displayData = new ImageData(size, size);
-    }
-
-    const src = source.data;
-    const dst = this.displayData.data;
-    const at = (index: number): number => src[index] ?? 0;
-    const scale = n / size;
-    for (let y = 0; y < size; y++) {
-      const sy = Math.min(n - 1, Math.max(0, (y + 0.5) * scale - 0.5));
-      const y0 = Math.floor(sy);
-      const y1 = Math.min(n - 1, y0 + 1);
-      const fy = sy - y0;
-      const y0Row = y0 * n;
-      const y1Row = y1 * n;
-      for (let x = 0; x < size; x++) {
-        const sx = Math.min(n - 1, Math.max(0, (x + 0.5) * scale - 0.5));
-        const x0 = Math.floor(sx);
-        const x1 = Math.min(n - 1, x0 + 1);
-        const fx = sx - x0;
-        const i00 = (y0Row + x0) * 4;
-        const i10 = (y0Row + x1) * 4;
-        const i01 = (y1Row + x0) * 4;
-        const i11 = (y1Row + x1) * 4;
-        const out = (y * size + x) * 4;
-        for (let channel = 0; channel < 4; channel++) {
-          const top = at(i00 + channel) * (1 - fx) + at(i10 + channel) * fx;
-          const bottom = at(i01 + channel) * (1 - fx) + at(i11 + channel) * fx;
-          dst[out + channel] = top * (1 - fy) + bottom * fy;
-        }
-      }
-    }
-    context.putImageData(this.displayData, 0, 0);
+    this.sampleCanvas = document.createElement("canvas");
+    this.sampleCanvas.width = wanted;
+    this.sampleCanvas.height = wanted;
+    this.sampleContext = this.sampleCanvas.getContext("2d");
+    this.imageData = this.sampleContext?.createImageData(wanted, wanted) ?? null;
   }
 
   /**
@@ -211,8 +170,10 @@ export class FringePatternNode extends CanvasNode {
     const spec = this.specProperty.value;
     this.prepareBuffers(spec.groups.length);
 
+    const sampleContext = this.sampleContext;
     const imageData = this.imageData;
-    if (!imageData) {
+    const sampleCanvas = this.sampleCanvas;
+    if (!(sampleContext && imageData && sampleCanvas)) {
       return;
     }
 
@@ -262,13 +223,19 @@ export class FringePatternNode extends CanvasNode {
       }
     }
 
-    this.blitSmoothed(context, imageData);
+    sampleContext.putImageData(imageData, 0, 0);
+
+    // Smoothing turns the sample grid back into the continuous field it stands
+    // for; without it the coarse broadband grid reads as visible blocks.
+    context.imageSmoothingEnabled = true;
+    context.drawImage(sampleCanvas, 0, 0, this.size, this.size);
   }
 
   public override dispose(): void {
     this.specProperty.unlink(this.specListener);
+    this.sampleCanvas = null;
+    this.sampleContext = null;
     this.imageData = null;
-    this.displayData = null;
     super.dispose();
   }
 }

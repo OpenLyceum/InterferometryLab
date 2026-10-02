@@ -90,11 +90,11 @@ open PRs that fight the overrides. Revisit when SceneryStack drops or re-pins th
 |---|---|---|
 | `lodash` | `~4.18.1` | SceneryStack declares `~4.17.12`. Bump clears Dependabot/npm advisories patched in 4.18.x (e.g. GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh). |
 | `three` | `~0.125.2` | SceneryStack declares `^0.104.0`. Floor is 0.125.0 for GHSA-fq6p-x6j3-cmmq (ReDoS). Staying on the 0.125 line avoids a larger API jump; **0.125.x still has open CVEs** (e.g. XSS GHSA-7vvq-7r29-5vg3, fixed only in ≥0.137.0). Remove this override if/when SceneryStack stops depending on `three` or pins a patched line itself. LightPropagation keeps a higher `three` pin — do not force 0.125 there. |
-| `brace-expansion` | `~5.0.9` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (originally GHSA-mh99-v99m-4gvg; keep ≥5.0.9 for GHSA-rgw5-rvv9-x895). |
+| `brace-expansion` | `~5.0.12` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (originally GHSA-mh99-v99m-4gvg and GHSA-rgw5-rvv9-x895; ≥5.0.12 for GHSA-q2hr-2g5m-vwhr, GHSA-qhr7-859c-m2p7 and GHSA-6j4f-fj2g-mc7p). |
 
 ## Testing
 
-138 vitest specs; `happy-dom`, template `tests/setup.ts`.
+141 vitest specs; `happy-dom`, template `tests/setup.ts`.
 
 | Path | Covers |
 |---|---|
@@ -102,6 +102,7 @@ open PRs that fight the overrides. Revisit when SceneryStack drops or re-pins th
 | `tests/fringeIntensity.test.ts` | detector geometry, two-beam and Airy intensity, finesse, `intensityProfile` |
 | `tests/refractiveIndex.test.ts` | Sellmeier vs published indices, Gladstone-Dale, tilted plates |
 | `tests/interferometerModels.test.ts` | all three models: derived values, controls, reset |
+| `tests/TimeModel.test.ts` | play/pause clock: defaults, stepping, reset |
 | `tests/memory-leak.test.ts` | dispose/WeakRef, extended to the four nodes that link model Properties |
 
 Several assertions are anchored to **published** values (N-BK7 at 632.8 nm and 587.6 nm, its Abbe
