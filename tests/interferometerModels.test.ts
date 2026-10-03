@@ -190,6 +190,19 @@ describe("MichelsonModel", () => {
     expect(spread).toBeGreaterThan(10_000);
   });
 
+  it("reports the visibility loss when white light is uncompensated", () => {
+    const model = new MichelsonModel();
+    model.zeroTheArms();
+    model.lightSource.sourceTypeProperty.value = SourceType.WHITE_LIGHT;
+    expect(model.visibilityProperty.value).toBeCloseTo(1, 10);
+
+    model.compensatorPlateProperty.value = false;
+    expect(model.visibilityProperty.value).toBeLessThan(0.1);
+
+    model.compensatorPlateProperty.value = true;
+    expect(model.visibilityProperty.value).toBeCloseTo(1, 10);
+  });
+
   it("restores every control on reset", () => {
     const model = new MichelsonModel();
     const before = {
@@ -232,6 +245,29 @@ describe("MachZehnderModel", () => {
       model.pathImbalanceProperty.value = imbalance;
       const total = model.portAFractionProperty.value + model.portBFractionProperty.value;
       expect(total).toBeCloseTo(1, 6);
+    }
+  });
+
+  it("averages rapid blue-laser fringes without aliasing them into a dark port", () => {
+    const model = new MachZehnderModel();
+    model.lightSource.sourceTypeProperty.value = SourceType.BLUE_LASER;
+
+    for (const [horizontal, vertical] of [
+      [293, 0],
+      [0, 293],
+      [292.8, 292.8],
+    ]) {
+      model.tiltHorizontalProperty.value = horizontal ?? 0;
+      model.tiltVerticalProperty.value = vertical ?? 0;
+      // A monochromatic cosine integrated over [-1, 1] has mean sinc(k).
+      // The laser's coherence envelope changes this by less than 10^-7 here.
+      const sinc = (tilt: number): number => {
+        const phase = (2 * Math.PI * 2 * tilt * 1e-6 * 10e6) / 488;
+        return phase === 0 ? 1 : Math.sin(phase) / phase;
+      };
+      const expectedA = (1 + sinc(horizontal ?? 0) * sinc(vertical ?? 0)) / 2;
+      expect(model.portAFractionProperty.value).toBeCloseTo(expectedA, 4);
+      expect(model.portAFractionProperty.value + model.portBFractionProperty.value).toBeCloseTo(1, 10);
     }
   });
 

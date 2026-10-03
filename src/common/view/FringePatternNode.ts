@@ -76,11 +76,12 @@ export class FringePatternNode extends CanvasNode {
   private readonly size: number;
   private readonly specListener: () => void;
 
-  /** Coarse sample grid. Scaled onto the detector with a bilinear blit in paintCanvas. */
+  /** Coarse sample grid, uploaded to a canvas before drawing in local coordinates. */
   private imageData: ImageData | null = null;
 
-  /** Full-size buffer filled from the sample grid so paintCanvas can putImageData. */
-  private displayData: ImageData | null = null;
+  /** Offscreen upload target: putImageData must never write directly to Scenery's canvas. */
+  private sampleCanvas: HTMLCanvasElement | null = null;
+  private sampleContext: CanvasRenderingContext2D | null = null;
 
   /** Side length of the current sample grid. */
   private sampleCount = 0;
@@ -111,56 +112,17 @@ export class FringePatternNode extends CanvasNode {
       return;
     }
 
+    const canvas = this.sampleCanvas ?? document.createElement("canvas");
+    canvas.width = wanted;
+    canvas.height = wanted;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("A 2D canvas context is required to render fringes");
+    }
+    this.sampleCanvas = canvas;
+    this.sampleContext = context;
     this.sampleCount = wanted;
-    this.imageData = new ImageData(wanted, wanted);
-  }
-
-  /**
-   * Copies the sample grid onto the detector with bilinear filtering.
-   * putImageData ignores the scenery transform, so the scale happens here
-   * rather than through a second canvas.
-   */
-  private blitSmoothed(context: CanvasRenderingContext2D, source: ImageData): void {
-    const size = Math.round(this.size);
-    const n = source.width;
-    if (n === size) {
-      context.putImageData(source, 0, 0);
-      return;
-    }
-
-    if (!this.displayData || this.displayData.width !== size) {
-      this.displayData = new ImageData(size, size);
-    }
-
-    const src = source.data;
-    const dst = this.displayData.data;
-    const at = (index: number): number => src[index] ?? 0;
-    const scale = n / size;
-    for (let y = 0; y < size; y++) {
-      const sy = Math.min(n - 1, Math.max(0, (y + 0.5) * scale - 0.5));
-      const y0 = Math.floor(sy);
-      const y1 = Math.min(n - 1, y0 + 1);
-      const fy = sy - y0;
-      const y0Row = y0 * n;
-      const y1Row = y1 * n;
-      for (let x = 0; x < size; x++) {
-        const sx = Math.min(n - 1, Math.max(0, (x + 0.5) * scale - 0.5));
-        const x0 = Math.floor(sx);
-        const x1 = Math.min(n - 1, x0 + 1);
-        const fx = sx - x0;
-        const i00 = (y0Row + x0) * 4;
-        const i10 = (y0Row + x1) * 4;
-        const i01 = (y1Row + x0) * 4;
-        const i11 = (y1Row + x1) * 4;
-        const out = (y * size + x) * 4;
-        for (let channel = 0; channel < 4; channel++) {
-          const top = at(i00 + channel) * (1 - fx) + at(i10 + channel) * fx;
-          const bottom = at(i01 + channel) * (1 - fx) + at(i11 + channel) * fx;
-          dst[out + channel] = top * (1 - fy) + bottom * fy;
-        }
-      }
-    }
-    context.putImageData(this.displayData, 0, 0);
+    this.imageData = context.createImageData(wanted, wanted);
   }
 
   /**
@@ -262,13 +224,21 @@ export class FringePatternNode extends CanvasNode {
       }
     }
 
-    this.blitSmoothed(context, imageData);
+    if (this.sampleCanvas && this.sampleContext) {
+      this.sampleContext.putImageData(imageData, 0, 0);
+      // drawImage honors Scenery's translation, scaling, clipping and opacity.
+      context.save();
+      context.imageSmoothingEnabled = true;
+      context.drawImage(this.sampleCanvas, 0, 0, this.size, this.size);
+      context.restore();
+    }
   }
 
   public override dispose(): void {
     this.specProperty.unlink(this.specListener);
     this.imageData = null;
-    this.displayData = null;
+    this.sampleCanvas = null;
+    this.sampleContext = null;
     super.dispose();
   }
 }

@@ -64,6 +64,12 @@ const EXPOSURE = 0.5;
 /** One frame's worth of emission, seconds — what the step-forward button advances. */
 const MANUAL_STEP_DT = 1 / 60;
 
+/** Minimum quadrature resolution along an axis with a nonzero mirror wedge. */
+const MIN_PORT_SAMPLES = 24;
+
+/** Samples per shortest-wavelength fringe, to keep the port average free of aliasing. */
+const PORT_SAMPLES_PER_FRINGE = 8;
+
 /**
  * A photon landing on a detector: where it hit, in detector coordinates.
  */
@@ -367,23 +373,30 @@ function pushMark(marks: PhotonMark[], position: Vector2): void {
 
 /**
  * Mean intensity over the detector for one port, as a fraction of the total
- * light. Averaged on a coarse grid — this feeds a percentage readout, not the
- * image, so a few hundred samples is ample.
+ * light. Resolve the shortest-wavelength fringes on each axis before averaging;
+ * a fixed grid can repeatedly land on dark fringes and misreport a bright port.
+ * The Mach-Zehnder has no ring term, so an axis without tilt needs only one sample.
  */
 function portFraction(spec: FringeSpec): number {
-  const samples = 24;
+  const shortestWavelength = Math.min(...spec.groups.map((group) => group.wavelengthNm));
+  const samplesForTilt = (tiltNm: number): number =>
+    tiltNm === 0
+      ? 1
+      : Math.max(MIN_PORT_SAMPLES, Math.ceil((PORT_SAMPLES_PER_FRINGE * 2 * Math.abs(tiltNm)) / shortestWavelength));
+  const samplesX = samplesForTilt(spec.geometry.tiltXNm);
+  const samplesY = samplesForTilt(spec.geometry.tiltYNm);
   const scratch = new Float64Array(spec.groups.length);
   let total = 0;
 
-  for (let iy = 0; iy < samples; iy++) {
-    const v = (2 * (iy + 0.5)) / samples - 1;
-    for (let ix = 0; ix < samples; ix++) {
-      const u = (2 * (ix + 0.5)) / samples - 1;
+  for (let iy = 0; iy < samplesY; iy++) {
+    const v = (2 * (iy + 0.5)) / samplesY - 1;
+    for (let ix = 0; ix < samplesX; ix++) {
+      const u = (2 * (ix + 0.5)) / samplesX - 1;
       total += intensityAt(spec, u, v, scratch);
     }
   }
 
   // Each port's mean intensity is already scaled so that the two ports' means
   // add to 1: exposure halves a peak of 2, and the ports are complementary.
-  return total / (samples * samples);
+  return total / (samplesX * samplesY);
 }

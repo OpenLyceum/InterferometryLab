@@ -176,6 +176,20 @@ describe("spectrumVisibility", () => {
     expect(spectrumVisibility(groups, 4000)).toBeCloseTo(lineVisibility(4000, 600, 10), 10);
   });
 
+  it("cancels equal monochromatic groups whose offsets differ by half a wavelength", () => {
+    const groups = [
+      { wavelengthNm: 600, bandwidthNm: 0, weight: 0.5, opdOffsetNm: 0 },
+      { wavelengthNm: 600, bandwidthNm: 0, weight: 0.5, opdOffsetNm: 300 },
+    ];
+    expect(spectrumVisibility(groups, 0)).toBeCloseTo(0, 12);
+  });
+
+  it("applies an OPD offset to the coherence envelope as well as the phase", () => {
+    const groups = [{ wavelengthNm: 600, bandwidthNm: 10, weight: 1, opdOffsetNm: -4000 }];
+    expect(spectrumVisibility(groups, 4000)).toBeCloseTo(1, 10);
+    expect(spectrumVisibility(groups, 0)).toBeCloseTo(lineVisibility(4000, 600, 10), 10);
+  });
+
   it("reproduces the doublet beat for two equal narrow lines", () => {
     const centerNm = 589.3;
     const separationNm = 0.597;

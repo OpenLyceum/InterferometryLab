@@ -134,13 +134,14 @@ export class CoherenceEnvelopeNode extends VBox {
 
     const update = (): void => {
       const spectrum = model.lightSource.spectrumProperty.value;
+      const groups = model.fringeSpecProperty.value.groups;
       const halfSpanNm = halfSpan(model.lightSource.coherenceLengthProperty.value, spectrum);
 
       const points: Vector2[] = [];
       for (let i = 0; i < SAMPLE_COUNT; i++) {
         const fraction = i / (SAMPLE_COUNT - 1);
         const x = -1 + 2 * fraction;
-        points.push(new Vector2(x, spectrumVisibility(spectrum.groups, x * halfSpanNm)));
+        points.push(new Vector2(x, spectrumVisibility(groups, x * halfSpanNm)));
       }
       curve.setDataSet(points);
 
@@ -155,10 +156,7 @@ export class CoherenceEnvelopeNode extends VBox {
       }
     };
 
-    const multilink = Multilink.multilinkAny(
-      [model.lightSource.spectrumProperty, model.pathDifferenceProperty],
-      update,
-    );
+    const multilink = Multilink.multilinkAny([model.fringeSpecProperty, model.pathDifferenceProperty], update);
 
     const chart = new Node({
       children: [chartRectangle, clipped],
