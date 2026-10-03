@@ -13,13 +13,15 @@
  * of leak this suite exists to catch.
  */
 
-import { NumberProperty, Property } from "scenerystack/axon";
+import { NumberProperty, Property, type ReadOnlyProperty } from "scenerystack/axon";
 import { Color } from "scenerystack/scenery";
 import { describe, expect, it } from "vitest";
 import type { FringeSpec } from "../src/common/model/FringeSpec.js";
 import { TimeModel } from "../src/common/TimeModel.js";
 import { FringePatternNode } from "../src/common/view/FringePatternNode.js";
 import { IntensityProfileNode } from "../src/common/view/IntensityProfileNode.js";
+import { FabryPerotModel } from "../src/fabry-perot/model/FabryPerotModel.js";
+import { TransmissionSpectrumNode } from "../src/fabry-perot/view/TransmissionSpectrumNode.js";
 import type { PhotonMark } from "../src/mach-zehnder/model/MachZehnderModel.js";
 import { PhotonMarksNode } from "../src/mach-zehnder/view/PhotonMarksNode.js";
 import { MichelsonModel } from "../src/michelson/model/MichelsonModel.js";
@@ -72,6 +74,17 @@ function createAndDisposeIntensityProfileNode(specProperty: Property<FringeSpec>
 function createAndDisposeCoherenceEnvelopeNode(model: MichelsonModel): WeakRef<object> {
   const node = new CoherenceEnvelopeNode(model, { width: 64, height: 32 });
   const ref = new WeakRef<object>(node);
+  node.dispose();
+  return ref;
+}
+
+function createAndDisposeTransmissionSpectrum(model: FabryPerotModel): WeakRef<object> {
+  const node = new TransmissionSpectrumNode(model, { width: 64, height: 32 });
+  const chart = node.children[1];
+  if (!chart) {
+    throw new Error("The transmission chart is missing");
+  }
+  const ref = new WeakRef<object>(chart);
   node.dispose();
   return ref;
 }
@@ -163,6 +176,34 @@ describe("Memory leak regression", () => {
     await forceGC(ref);
     expect(ref.deref()).toBeUndefined();
     expect(model.pathDifferenceProperty.value).toBeDefined();
+  });
+
+  it("TransmissionSpectrumNode releases model listeners and tolerates subsequent changes", () => {
+    const model = new FabryPerotModel();
+    const specProperty = model.fringeSpecProperty as ReadOnlyProperty<FringeSpec>;
+    const resolvedProperty = model.resolvedProperty as ReadOnlyProperty<boolean>;
+    expect(specProperty.hasListeners()).toBe(false);
+    expect(resolvedProperty.hasListeners()).toBe(false);
+    const node = new TransmissionSpectrumNode(model, { width: 64, height: 32 });
+    expect(specProperty.hasListeners()).toBe(true);
+    expect(resolvedProperty.hasListeners()).toBe(true);
+
+    node.disposeSubtree();
+    expect(specProperty.hasListeners()).toBe(false);
+    expect(resolvedProperty.hasListeners()).toBe(false);
+    expect(() => {
+      model.spacingProperty.value += 1000;
+      model.absorptanceProperty.value = 0.01;
+      model.twinLineProperty.value = true;
+    }).not.toThrow();
+  });
+
+  it("the disposed transmission chart is collected while its model stays alive", async () => {
+    const model = new FabryPerotModel();
+    const ref = createAndDisposeTransmissionSpectrum(model);
+    await forceGC(ref);
+    expect(ref.deref()).toBeUndefined();
+    expect(model.effectiveSpacingProperty.value).toBeDefined();
   });
 });
 

@@ -5,9 +5,10 @@
  *
  * ── How it draws ──────────────────────────────────────────────────────────────
  * The intensity field is evaluated on a square sample grid, written into an
- * ImageData, and then drawn scaled up to the node's size with smoothing on. The
- * grid is coarser than the node so that the expensive part — the physics — runs
- * at a fixed cost regardless of how large the detector is drawn.
+ * ImageData, and then drawn by this CanvasNode scaled up to the node's size
+ * with smoothing on. The grid is coarser than the node so that the expensive
+ * part — the physics — runs at a fixed cost regardless of how large the
+ * detector is drawn.
  *
  * The loops run pixel-outer, group-inner, over a plan built once per repaint.
  * Path difference depends only on position, so it is computed once per pixel and
@@ -75,15 +76,12 @@ export class FringePatternNode extends CanvasNode {
   private readonly size: number;
   private readonly specListener: () => void;
 
-  /**
-   * Offscreen canvas holding the sampled pattern, scaled up when drawn. It must
-   * stay: putImageData ignores the canvas transform, so writing the samples
-   * straight into the scenery context lands them at the top-left of the whole
-   * display instead of inside the detector. drawImage respects the transform.
-   */
+  /** Coarse sample grid, uploaded to a canvas before drawing in local coordinates. */
+  private imageData: ImageData | null = null;
+
+  /** Offscreen upload target: putImageData must never write directly to Scenery's canvas. */
   private sampleCanvas: HTMLCanvasElement | null = null;
   private sampleContext: CanvasRenderingContext2D | null = null;
-  private imageData: ImageData | null = null;
 
   /** Side length of the current sample grid. */
   private sampleCount = 0;
@@ -110,16 +108,21 @@ export class FringePatternNode extends CanvasNode {
    */
   private prepareBuffers(groupCount: number): void {
     const wanted = groupCount > BROADBAND_GROUP_THRESHOLD ? FRINGE_SAMPLES_BROADBAND : FRINGE_SAMPLES_MONOCHROMATIC;
-    if (this.sampleCount === wanted && this.sampleContext && this.imageData) {
+    if (this.sampleCount === wanted && this.imageData) {
       return;
     }
 
+    const canvas = this.sampleCanvas ?? document.createElement("canvas");
+    canvas.width = wanted;
+    canvas.height = wanted;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("A 2D canvas context is required to render fringes");
+    }
+    this.sampleCanvas = canvas;
+    this.sampleContext = context;
     this.sampleCount = wanted;
-    this.sampleCanvas = document.createElement("canvas");
-    this.sampleCanvas.width = wanted;
-    this.sampleCanvas.height = wanted;
-    this.sampleContext = this.sampleCanvas.getContext("2d");
-    this.imageData = this.sampleContext?.createImageData(wanted, wanted) ?? null;
+    this.imageData = context.createImageData(wanted, wanted);
   }
 
   /**
@@ -170,10 +173,8 @@ export class FringePatternNode extends CanvasNode {
     const spec = this.specProperty.value;
     this.prepareBuffers(spec.groups.length);
 
-    const sampleContext = this.sampleContext;
     const imageData = this.imageData;
-    const sampleCanvas = this.sampleCanvas;
-    if (!(sampleContext && imageData && sampleCanvas)) {
+    if (!imageData) {
       return;
     }
 
@@ -223,19 +224,21 @@ export class FringePatternNode extends CanvasNode {
       }
     }
 
-    sampleContext.putImageData(imageData, 0, 0);
-
-    // Smoothing turns the sample grid back into the continuous field it stands
-    // for; without it the coarse broadband grid reads as visible blocks.
-    context.imageSmoothingEnabled = true;
-    context.drawImage(sampleCanvas, 0, 0, this.size, this.size);
+    if (this.sampleCanvas && this.sampleContext) {
+      this.sampleContext.putImageData(imageData, 0, 0);
+      // drawImage honors Scenery's translation, scaling, clipping and opacity.
+      context.save();
+      context.imageSmoothingEnabled = true;
+      context.drawImage(this.sampleCanvas, 0, 0, this.size, this.size);
+      context.restore();
+    }
   }
 
   public override dispose(): void {
     this.specProperty.unlink(this.specListener);
+    this.imageData = null;
     this.sampleCanvas = null;
     this.sampleContext = null;
-    this.imageData = null;
     super.dispose();
   }
 }

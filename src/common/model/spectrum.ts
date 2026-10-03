@@ -186,16 +186,21 @@ export function meanWavelength(groups: readonly SpectralGroup[]): number {
  * visibility readout reports.
  *
  * Each group contributes weight · V_group(Δ) · cos(2πΔ/λ_group); the resultant
- * amplitude is the modulus of their phasor sum.
+ * amplitude is the modulus of their phasor sum. Renderable groups may carry a
+ * dispersive OPD offset, which affects both their phase and coherence envelope.
  */
-export function spectrumVisibility(groups: readonly SpectralGroup[], opdNm: number): number {
+export function spectrumVisibility(
+  groups: readonly (SpectralGroup & { readonly opdOffsetNm?: number })[],
+  opdNm: number,
+): number {
   let real = 0;
   let imaginary = 0;
   let total = 0;
 
   for (const group of groups) {
-    const envelope = group.weight * lineVisibility(opdNm, group.wavelengthNm, group.bandwidthNm);
-    const phase = (2 * Math.PI * opdNm) / group.wavelengthNm;
+    const groupOpdNm = opdNm + (group.opdOffsetNm ?? 0);
+    const envelope = group.weight * lineVisibility(groupOpdNm, group.wavelengthNm, group.bandwidthNm);
+    const phase = (2 * Math.PI * groupOpdNm) / group.wavelengthNm;
     real += envelope * Math.cos(phase);
     imaginary += envelope * Math.sin(phase);
     total += group.weight;

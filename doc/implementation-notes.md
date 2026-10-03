@@ -61,6 +61,11 @@ every colour in the spectrum; the per-group constants (display colour, share of 
 white balance) are folded into the plan up front. The per-pixel work is then just calls into the
 shared physics module.
 
+**Canvas placement.** The sample pixels are uploaded to a reusable offscreen canvas with
+`putImageData`, then drawn into Scenery's canvas with `drawImage`. The latter respects the
+node's translation, scale, clipping and opacity; writing pixels directly to Scenery's canvas
+would ignore those effects and place the image at the display origin.
+
 **Repaint policy.** The pattern is repainted when its `FringeSpec` changes, not on a clock. A
 static scene costs nothing.
 
@@ -80,6 +85,12 @@ rather than the view is what lets `tests/fringeIntensity.test.ts` assert that th
 ports' profiles sum to a constant — the claim `doc/model.md` §6 makes and the dashed total on that
 chart draws.
 
+The Michelson's visibility readout and coherence curve use the `FringeSpec` groups, including
+their dispersive path offsets, so removing the compensator changes both measurements as well
+as the detector image. The Mach-Zehnder's port percentages average intensity on a grid that
+resolves the shortest wavelength's fringes along each tilted axis. An axis without tilt needs
+only one sample; a fixed coarse grid can alias rapid fringes into a falsely bright or dark port.
+
 **Both charts pad their value axis past the reachable range** (−0.06 to 1.08 rather than 0 to 1).
 The traces that matter most are the flat ones: a dark port pinned at zero, a constant total pinned
 at one, a laser's visibility flat at full contrast. Drawn hard against the frame those read as an
@@ -95,7 +106,9 @@ around a line separation.
 **Dispose is not optional here.** Each chart links Properties it does not own, and so do the
 formatter Properties feeding its `accessibleParagraph`. Disposing only the multilink leaves those
 intermediates listening, which keeps the node reachable from a model that has outlived it;
-`tests/memory-leak.test.ts` covers both nodes for exactly that.
+`tests/memory-leak.test.ts` covers all three charts for exactly that. The transmission plot also
+disposes the Property behind its resolution label, and its regression checks that model changes
+after disposal cannot redraw the old chart.
 
 ## Time controls
 

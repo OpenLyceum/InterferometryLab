@@ -26,7 +26,7 @@
 import { BooleanProperty, DerivedProperty, NumberProperty, type TReadOnlyProperty } from "scenerystack/axon";
 import type { TModel } from "scenerystack/joist";
 import { type FringeSpec, toFringeGroups } from "../../common/model/FringeSpec.js";
-import { tiltWedgeNm } from "../../common/model/fringeIntensity.js";
+import { opticalPathDifference, tiltWedgeNm } from "../../common/model/fringeIntensity.js";
 import { LightSourceModel } from "../../common/model/LightSourceModel.js";
 import { gasIndex, mediumOpticalPathDelta, uncompensatedDispersionOpd } from "../../common/model/refractiveIndex.js";
 import { spectrumVisibility } from "../../common/model/spectrum.js";
@@ -177,11 +177,6 @@ export class MichelsonModel implements TModel {
       (mirrorPath, cellOpd) => mirrorPath + cellOpd,
     );
 
-    this.visibilityProperty = new DerivedProperty(
-      [this.lightSource.spectrumProperty, this.pathDifferenceProperty],
-      (spectrum, pathDifference) => spectrumVisibility(spectrum.groups, pathDifference),
-    );
-
     this.fringeCountProperty = new DerivedProperty(
       [this.pathDifferenceProperty, this.countReferenceProperty, this.lightSource.meanWavelengthProperty],
       (pathDifference, reference, wavelengthNm) => (pathDifference - reference) / wavelengthNm,
@@ -224,6 +219,11 @@ export class MichelsonModel implements TModel {
         contrast: 1,
         exposure: EXPOSURE,
       }),
+    );
+
+    this.visibilityProperty = new DerivedProperty(
+      [this.fringeSpecProperty],
+      (spec) => spec.contrast * spectrumVisibility(spec.groups, opticalPathDifference(spec.geometry, 0, 0)),
     );
   }
 

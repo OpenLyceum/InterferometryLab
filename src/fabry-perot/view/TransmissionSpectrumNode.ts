@@ -12,7 +12,7 @@
  * see at all in the rings.
  */
 
-import { DerivedProperty, type TReadOnlyProperty } from "scenerystack/axon";
+import { DerivedProperty, Multilink, type TReadOnlyProperty, type UnknownMultilink } from "scenerystack/axon";
 import { ChartRectangle, ChartTransform, LinePlot } from "scenerystack/bamboo";
 import { Bounds2, Range, Vector2 } from "scenerystack/dot";
 import { Line, Node, Text, VBox } from "scenerystack/scenery";
@@ -42,6 +42,9 @@ export type TransmissionSpectrumNodeOptions = {
 };
 
 export class TransmissionSpectrumNode extends VBox {
+  private readonly multilink: UnknownMultilink;
+  private readonly resolutionProperty: TReadOnlyProperty<string>;
+
   public constructor(model: FabryPerotModel, options: TransmissionSpectrumNodeOptions) {
     const strings = StringManager.getInstance();
     const fabryPerot = strings.getFabryPerotStrings();
@@ -117,10 +120,10 @@ export class TransmissionSpectrumNode extends VBox {
       });
     };
 
-    update();
-    model.fringeSpecProperty.link(update);
-    model.absorptanceProperty.link(update);
-    model.twinLineProperty.link(update);
+    const multilink = Multilink.multilinkAny(
+      [model.fringeSpecProperty, model.freeSpectralRangeProperty, model.resolutionLimitProperty],
+      update,
+    );
 
     const chart = new Node({
       children: [chartRectangle, clipped],
@@ -137,7 +140,8 @@ export class TransmissionSpectrumNode extends VBox {
       fill: InterferometryLabColors.plotAxisColorProperty,
     });
 
-    const resolutionLabel = new Text(resolutionTextProperty(model), {
+    const resolutionProperty = resolutionTextProperty(model);
+    const resolutionLabel = new Text(resolutionProperty, {
       font: new PhetFont(LABEL_FONT_SIZE),
       fill: InterferometryLabColors.textColorProperty,
       maxWidth: options.width,
@@ -145,6 +149,14 @@ export class TransmissionSpectrumNode extends VBox {
     });
 
     super({ spacing: 5, align: "center", children: [title, chart, axisLabel, resolutionLabel] });
+    this.multilink = multilink;
+    this.resolutionProperty = resolutionProperty;
+  }
+
+  public override dispose(): void {
+    this.multilink.dispose();
+    this.resolutionProperty.dispose();
+    super.dispose();
   }
 }
 
