@@ -257,6 +257,7 @@ export class MachZehnderModel implements TModel {
 
   /** Clears the photon counts and the accumulated marks. */
   public clearCounts(): void {
+    this.photonAccumulator = 0;
     this.countsAProperty.value = 0;
     this.countsBProperty.value = 0;
     this.photonsEmittedProperty.value = 0;

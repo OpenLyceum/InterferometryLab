@@ -520,3 +520,19 @@ describe("FabryPerotModel", () => {
     expect(offAxisIntensity()).toBeLessThan(broad);
   });
 });
+
+describe("Photon count restart", () => {
+  it("clears fractional emission time along with the photon counts", () => {
+    const model = new MachZehnderModel();
+    model.beamModeProperty.value = BeamMode.SINGLE_PHOTON;
+    model.photonRateProperty.value = 20;
+    model.stepOnce();
+    model.stepOnce();
+    model.clearCounts();
+    model.stepOnce();
+    expect(model.photonsEmittedProperty.value).toBe(0);
+    model.stepOnce();
+    model.stepOnce();
+    expect(model.photonsEmittedProperty.value).toBe(1);
+  });
+});
