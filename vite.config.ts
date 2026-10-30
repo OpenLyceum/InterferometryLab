@@ -1,4 +1,4 @@
-import type { Plugin, Rollup } from "vite";
+import type { Plugin, Rolldown } from "vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import packageJson from "./package.json" with { type: "json" };
@@ -64,7 +64,7 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Decode a Rollup asset source (string or bytes) to text. */
+/** Decode a Rolldown asset source (string or bytes) to text. */
 function assetSourceToText(source: string | Uint8Array): string {
   return typeof source === "string" ? source : Buffer.from(source).toString("utf8");
 }
@@ -76,7 +76,7 @@ function assetSourceToText(source: string | Uint8Array): string {
  * The replacement is a function (never a string) so `$` sequences in the JS/CSS
  * are not interpreted as `String.prototype.replace` special patterns.
  */
-function inlineAsset(html: string, fileName: string, item: Rollup.OutputChunk | Rollup.OutputAsset): string | null {
+function inlineAsset(html: string, fileName: string, item: Rolldown.OutputChunk | Rolldown.OutputAsset): string | null {
   const ref = escapeRegExp(fileName);
 
   if (item.type === "chunk") {
@@ -130,7 +130,7 @@ function inlineSingleFile(): Plugin {
   return {
     name: "inline-single-file",
     enforce: "post",
-    generateBundle(_options: Rollup.NormalizedOutputOptions, bundle: Rollup.OutputBundle): void {
+    generateBundle(_options: Rolldown.NormalizedOutputOptions, bundle: Rolldown.OutputBundle): void {
       for (const htmlName of Object.keys(bundle)) {
         const htmlAsset = bundle[htmlName];
         if (!htmlName.endsWith(".html") || htmlAsset?.type !== "asset" || typeof htmlAsset.source !== "string") {
@@ -166,7 +166,7 @@ export default defineConfig(({ mode }) => {
     // So the build can be served from an arbitrary path
     base: "./",
     build: {
-      // Requires Vite 8+ / esbuild ≥0.24. Run `npm ci` if build errors on ES2024.
+      // Fleet browser target. Oxc accepts ES2024 directly.
       target: "es2024",
       // SceneryStack bundles exceed Vite's default 500 kB chunk warning.
       chunkSizeWarningLimit: 5000,
@@ -177,9 +177,9 @@ export default defineConfig(({ mode }) => {
         cssCodeSplit: false,
         // Skip copying public/ (favicon, icons) — nothing external should remain.
         copyPublicDir: false,
-        rollupOptions: {
+        rolldownOptions: {
           // Collapse dynamic imports into the single entry chunk.
-          output: { inlineDynamicImports: true },
+          output: { codeSplitting: false },
         },
       }),
     },
