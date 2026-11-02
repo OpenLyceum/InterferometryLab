@@ -13,6 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 
+/** @public */
 export type DisposableObject = { dispose(): void };
 
 export type DisposalCase = {
@@ -34,6 +35,8 @@ export type DisposalCase = {
  * avoids the WeakRef macrotask-liveness pin. Without refs the loop always runs all
  * passes, which on a slow gc() can exceed the Vitest testTimeout — pass refs when
  * you have them.
+ *
+ * @public
  */
 export async function forceGC(earlyExitRefs?: WeakRef<object> | readonly WeakRef<object>[]): Promise<void> {
   const refs = earlyExitRefs === undefined ? [] : Array.isArray(earlyExitRefs) ? earlyExitRefs : [earlyExitRefs];
@@ -49,7 +52,7 @@ export async function forceGC(earlyExitRefs?: WeakRef<object> | readonly WeakRef
   }
 }
 
-/** Create, dispose, and return a WeakRef to the disposed instance. */
+/** Create, dispose, and return a WeakRef to the disposed instance. @public */
 export function createAndDispose(create: () => DisposableObject): WeakRef<object> {
   const instance = create();
   const ref = new WeakRef<object>(instance);
