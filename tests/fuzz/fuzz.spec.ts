@@ -94,7 +94,7 @@ async function runFuzz(page: Page, fuzzUrl: string): Promise<void> {
     await page.waitForTimeout(waitTime);
     elapsed += waitTime;
     try {
-      await page.evaluate(() => window.document.hasFocus);
+      await page.evaluate(() => window.document.hasFocus());
     } catch {
       break;
     }

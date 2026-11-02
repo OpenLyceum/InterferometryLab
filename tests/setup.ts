@@ -167,6 +167,8 @@ if (typeof globalThis.Worker === "undefined") {
 // its real type is a large overload union (widened further by @webgpu/types),
 // and a spread argument cannot be applied to an overload union.
 type LooseGetContext = (this: HTMLCanvasElement, contextId: string, ...args: unknown[]) => unknown;
+// Detached on purpose: it is only ever invoked as `origGetContext.call(this, …)` below.
+// oxlint-disable-next-line typescript/unbound-method
 const origGetContext = HTMLCanvasElement.prototype.getContext as unknown as LooseGetContext;
 HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, contextId: string, ...args: unknown[]) {
   if (contextId === "2d") {
