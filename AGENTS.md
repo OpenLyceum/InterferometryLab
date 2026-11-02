@@ -78,20 +78,6 @@ micrometer, mirror tilt) only reach their useful precision via shift-arrow.
   last test and exceeds the 30 s timeout in this environment — it fails on a pristine template
   checkout too, so this is a fix rather than a deviation. Worth upstreaming.
 
-
-### `package.json` overrides
-
-JSON cannot carry comments, so the rationale for forced transitive pins lives here. Prefer
-**tilde (`~`) or exact** versions — caret (`^`) lets minors drift under what is meant to be a
-hard pin. Dependabot ignores these three names (see `.github/dependabot.yml`) so it does not
-open PRs that fight the overrides. Revisit when SceneryStack drops or re-pins them upstream.
-
-| Override | Pin | Why |
-|---|---|---|
-| `lodash` | `~4.18.1` | SceneryStack declares `~4.17.12`. Bump clears Dependabot/npm advisories patched in 4.18.x (e.g. GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh). |
-| `three` | `~0.125.2` | SceneryStack declares `^0.104.0`. Floor is 0.125.0 for GHSA-fq6p-x6j3-cmmq (ReDoS). Staying on the 0.125 line avoids a larger API jump; **0.125.x still has open CVEs** (e.g. XSS GHSA-7vvq-7r29-5vg3, fixed only in ≥0.137.0). Remove this override if/when SceneryStack stops depending on `three` or pins a patched line itself. LightPropagation keeps a higher `three` pin — do not force 0.125 there. |
-| `brace-expansion` | `~5.0.12` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (originally GHSA-mh99-v99m-4gvg and GHSA-rgw5-rvv9-x895; ≥5.0.12 for GHSA-q2hr-2g5m-vwhr, GHSA-qhr7-859c-m2p7 and GHSA-6j4f-fj2g-mc7p). |
-
 ## Testing
 
 141 vitest specs; `happy-dom`, template `tests/setup.ts`.
@@ -109,29 +95,9 @@ Several assertions are anchored to **published** values (N-BK7 at 632.8 nm and 5
 number, air's refractivity) rather than to the implementation, so a wrong constant fails instead
 of being locked in. Keep that property when adding tests.
 
-## Commands
-
-```bash
-npm run lint && npm run check && npm run build && npm test
-```
-
-`npm run release` runs `npm test` before the version bump, and `src/init.ts` reads `version` from `package.json`, so the About dialog always matches the release.
-
-| Command | Description |
-|---|---|
-| `npm start` / `npm run dev` | Vite dev server |
-| `npm run build` | Type-check + production build |
-| `npm run build:single` | Single-file build |
-| `npm run check` | `tsc --noEmit` across app, scripts and tests |
-| `npm run lint` / `npm run fix` | Biome check / auto-fix |
-| `npm test` | Vitest |
-| `npm run test:fuzz` / `:quick` | Playwright fuzz smoke |
-| `npm run icons` | Regenerate PWA icons |
-
-Use `?screens=1`, `?screens=2`, `?screens=3` to open a single screen directly — much faster than
-clicking through the home screen when checking a change.
-
 ## Development notes
+
+`?screens=1`, `?screens=2`, or `?screens=3` opens that screen directly.
 
 ### Things that will bite you
 
