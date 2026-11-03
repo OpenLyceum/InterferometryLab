@@ -18,12 +18,19 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
+import { parseArgs } from "node:util";
 import pngToIco from "png-to-ico";
 import sharp from "sharp";
 
-const here = dirname(fileURLToPath(import.meta.url));
+const { values: flags } = parseArgs({
+  options: {
+    "screenshots-from-assets": { type: "boolean", default: false },
+    "placeholder-screenshots": { type: "boolean", default: false },
+  },
+});
+
+const here = import.meta.dirname;
 const publicDir = resolve(here, "..", "public");
 const svg = readFileSync(resolve(publicDir, "icons", "icon.svg"));
 
@@ -85,8 +92,8 @@ async function writeScreenshotFrom(source: string, width: number, height: number
 }
 
 const capture = resolve(here, "..", "assets", "screenshot.png");
-const fromAssets = process.argv.includes("--screenshots-from-assets");
-const overwriteScreenshots = process.argv.includes("--placeholder-screenshots");
+const fromAssets = flags["screenshots-from-assets"];
+const overwriteScreenshots = flags["placeholder-screenshots"];
 if (fromAssets && !existsSync(capture)) {
   throw new Error("--screenshots-from-assets needs assets/screenshot.png (Baton/scripts/generate-screenshots.sh)");
 }
