@@ -183,7 +183,10 @@ HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, cont
 } as typeof HTMLCanvasElement.prototype.getContext;
 
 // ── SceneryStack init ────────────────────────────────────────────────────────
-import { init, madeWithSceneryStackSplashDataURI } from "scenerystack/init";
+// Dynamic import on purpose: a static `import` is hoisted and would load
+// scenerystack/init before the mocks above are installed. (`export {}` below keeps
+// this file an ES module, which top-level await requires.)
+const { init, madeWithSceneryStackSplashDataURI } = await import("scenerystack/init");
 
 init({
   // Must match the package.json "name" (and the name in src/init.ts).
@@ -196,3 +199,5 @@ init({
   allowLocaleSwitching: false,
   colorProfiles: ["default"],
 });
+
+export {};
