@@ -91,6 +91,7 @@ async function runFuzz(page: Page, fuzzUrl: string): Promise<void> {
   let elapsed = 0;
   while (elapsed < FUZZ_DURATION) {
     const waitTime = Math.min(checkInterval, FUZZ_DURATION - elapsed);
+    // biome-ignore lint/suspicious/noPlaywrightWaitForTimeout: the fuzzer runs for a fixed duration by design.
     await page.waitForTimeout(waitTime);
     elapsed += waitTime;
     try {
