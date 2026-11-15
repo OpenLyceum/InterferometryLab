@@ -27,7 +27,7 @@ jobs:
     uses: OpenLyceum/Baton/.github/workflows/ci.yml@main
     with:
       run-architecture: true
-      unused-mode: advisory
+      unused-mode: required
 
   compliance:
     uses: OpenLyceum/Baton/.github/workflows/shared-compliance-check.yml@main
