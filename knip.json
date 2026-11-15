@@ -4,6 +4,27 @@
   "entry": [],
   "ignoreFiles": [],
   "ignoreDependencies": ["@swc/core"],
-  "ignoreUnresolved": [],
-  "ignoreBinaries": []
+  "ignoreUnresolved": ["./.dependency-cruiser.local.cjs"],
+  "ignoreBinaries": [],
+  "includeEntryExports": true,
+  "treatConfigHintsAsErrors": true,
+  "include": [
+    "files",
+    "subpaths",
+    "dependencies",
+    "unlisted",
+    "binaries",
+    "unresolved",
+    "exports",
+    "types",
+    "enumMembers",
+    "namespaceMembers",
+    "duplicates",
+    "catalog",
+    "catalogReferences",
+    "cycles"
+  ],
+  "rules": {
+    "cycles": "error"
+  }
 }
