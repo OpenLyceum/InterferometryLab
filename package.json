@@ -27,6 +27,8 @@
     "format": "biome format --write .",
     "fix": "biome check --write .",
     "check": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "check:unused": "knip",
+    "check:architecture": "depcruise src",
     "release": "npm run check && npm run lint && npm run build && npm test && npm version patch && git push && git push --tags",
     "watch": "tsc --watch",
     "test": "vitest run",
@@ -45,7 +47,9 @@
   "devDependencies": {
     "@biomejs/biome": "^2.6.5",
     "@playwright/test": "^1.65.0",
+    "@swc/core": "^1.15.3",
     "@types/node": "^26.6.6",
+    "dependency-cruiser": "^18.7.2",
     "happy-dom": "^21.0.4",
     "knip": "^6.45.1",
     "png-to-ico": "^3.0.2",
@@ -69,5 +73,8 @@
       "version": ">=26",
       "onFail": "error"
     }
+  },
+  "allowScripts": {
+    "@swc/core@1.16.22": true
   }
 }
