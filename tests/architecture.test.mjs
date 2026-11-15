@@ -10,7 +10,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const cli = join(root, "node_modules/dependency-cruiser/bin/dependency-cruiser.mjs");
 
 // Use the actual CLI, parser and resolver: matching regexes alone misses graph regressions.
-function cruise(files, overlay, guidance = "") {
+function cruise(files, overlay, guidance = "", packageMetadata = {}) {
   const directory = mkdtempSync(join(tmpdir(), "architecture-"));
   try {
     copyFileSync(join(root, ".dependency-cruiser.cjs"), join(directory, ".dependency-cruiser.cjs"));
@@ -20,9 +20,11 @@ function cruise(files, overlay, guidance = "") {
     }
     const contents = {
       "package.json": JSON.stringify({
+        name: "architecture-fixture",
         type: "module",
         dependencies: { scenerystack: "*" },
         devDependencies: { vitest: "*" },
+        ...packageMetadata,
       }),
       "AGENTS.md": guidance,
       "node_modules/undeclared-fixture/package.json": JSON.stringify({ name: "undeclared-fixture", main: "index.js" }),
@@ -215,4 +217,114 @@ test("allows static images outside src while rejecting executable asset helpers"
   const helper = cruise({ "src/main.ts": 'import "../assets/helper.js";', "assets/helper.ts": "export const value = 1;" });
   assert.ok(violations(helper).includes("no-src-to-tooling"), helper.stdout);
   assert.notEqual(helper.status, 0);
+});
+
+
+test("rejects model value imports of root color modules", () => {
+  const result = cruise({
+    "src/main.ts": 'import "./lab/model/Model.js";',
+    "src/lab/model/Model.ts": 'import "../../FixtureColors.js";',
+    "src/FixtureColors.ts": "export const palette = {};",
+  });
+  assert.ok(violations(result).includes("no-model-to-colors"), result.stdout);
+  assert.notEqual(result.status, 0);
+});
+
+test("allows erased model imports of color-module types", () => {
+  const result = cruise({
+    "src/main.ts": 'import "./lab/model/Model.js";',
+    "src/lab/model/Model.ts": 'import type { Palette } from "../../FixtureColors.js"; export type Model = Palette;',
+    "src/FixtureColors.ts": "export type Palette = { name: string };",
+  });
+  assert.deepEqual(violations(result), [], result.stdout);
+  assert.equal(result.status, 0);
+});
+
+test("rejects unreachable modules even when they have outgoing dependencies", () => {
+  const result = cruise({
+    "src/main.ts": 'import "./common/live.js";',
+    "src/common/live.ts": "export const value = 1;",
+    "src/common/dead.ts": 'export { value } from "./live.js";',
+  });
+  assert.deepEqual(violations(result), ["no-unreachable-from-entry"], result.stdout);
+  assert.notEqual(result.status, 0);
+});
+
+test("allows literal dynamic entry imports and ambient declarations", () => {
+  const result = cruise({
+    "src/main.ts": 'void import("./common/lazy.js");',
+    "src/common/lazy.ts": "export const value = 1;",
+    "src/environment.d.ts": "declare const environment: string;",
+  });
+  assert.deepEqual(violations(result), [], result.stdout);
+  assert.equal(result.status, 0);
+});
+
+test("optional toolkit entry points belong to the template only", () => {
+  const files = {
+    "src/main.ts": 'import "scenerystack/axon";',
+    "src/common/SimControlOptions.ts": 'import "scenerystack/sun";',
+    "src/common/SimPanel.ts": 'import "scenerystack/sun";',
+    "src/common/TimeModel.ts": 'import "scenerystack/axon";',
+  };
+  const template = cruise(files, undefined, "", { name: ["scenerystack", "template"].join("-") });
+  assert.deepEqual(violations(template), [], template.stdout);
+  assert.equal(template.status, 0);
+  const fork = cruise(files);
+  assert.equal(violations(fork).filter((rule) => rule === "no-unreachable-from-entry").length, 3, fork.stdout);
+  assert.notEqual(fork.status, 0);
+});
+
+test("rejects an imported package declared in multiple dependency categories", () => {
+  const result = cruise(
+    { "src/main.ts": 'import "scenerystack/axon";' },
+    undefined,
+    "",
+    { devDependencies: { scenerystack: "*", vitest: "*" } },
+  );
+  assert.ok(violations(result).includes("no-duplicate-dep-types"), result.stdout);
+  assert.notEqual(result.status, 0);
+});
+
+test("warns on installed package deprecation metadata", () => {
+  const result = cruise(
+    {
+      "src/main.ts": 'import "deprecated-fixture";',
+      "node_modules/deprecated-fixture/package.json": JSON.stringify({
+        name: "deprecated-fixture", main: "index.js", deprecated: "Use its replacement.",
+      }),
+      "node_modules/deprecated-fixture/index.js": "export const value = 1;",
+    },
+    undefined,
+    "",
+    { dependencies: { "deprecated-fixture": "*" } },
+  );
+  assert.deepEqual(violations(result), ["not-to-deprecated"], result.stdout);
+  assert.equal(result.status, 0);
+});
+
+test("resolves browser conditional exports, browser entry fields and browser aliases", () => {
+  const result = cruise(
+    {
+      "src/main.ts": 'import "conditional-fixture"; import "entry-fixture"; import "alias-fixture";',
+      "node_modules/conditional-fixture/package.json": JSON.stringify({
+        name: "conditional-fixture",
+        exports: { node: "./missing-node.js", browser: "./browser.js", default: "./missing-default.js" },
+      }),
+      "node_modules/conditional-fixture/browser.js": "export const value = 1;",
+      "node_modules/entry-fixture/package.json": JSON.stringify({
+        name: "entry-fixture", browser: "browser.js", main: "missing-node.js",
+      }),
+      "node_modules/entry-fixture/browser.js": "export const value = 1;",
+      "node_modules/alias-fixture/package.json": JSON.stringify({
+        name: "alias-fixture", main: "node.js", browser: { "./node.js": "./browser.js" },
+      }),
+      "node_modules/alias-fixture/browser.js": "export const value = 1;",
+    },
+    undefined,
+    "",
+    { dependencies: { "conditional-fixture": "*", "entry-fixture": "*", "alias-fixture": "*" } },
+  );
+  assert.deepEqual(violations(result), [], result.stdout);
+  assert.equal(result.status, 0);
 });

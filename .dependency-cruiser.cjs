@@ -14,6 +14,14 @@
 
 const SHARED_ROOTS = "common|preferences|i18n|assets";
 
+// Optional starter components are public entry points only in the template itself.
+// Forks must use or remove them, just like every other application module.
+// Split the package name to preserve this test during fleet name substitution.
+const ENTRY_PATH =
+  require("./package.json").name === ["scenerystack", "template"].join("-")
+    ? "^src/main\\.ts$|^src/common/(SimControlOptions|SimPanel|TimeModel)\\.ts$"
+    : "^src/main\\.ts$";
+
 const ORPHAN_PATH_NOT = [
   "(^|/)\\.[^/]+\\.(js|cjs|mjs|ts|json)$",
   "\\.d\\.(c|m)?ts$",
@@ -38,6 +46,20 @@ const config = {
       comment: "Declare runtime packages directly in dependencies; do not rely on transitive installs.",
       from: { path: "^src/" },
       to: { dependencyTypes: ["npm-no-pkg", "npm-unknown"] },
+    },
+    {
+      name: "no-duplicate-dep-types",
+      severity: "error",
+      comment: "Declare each imported package in one dependency category.",
+      from: { path: "^src/" },
+      to: { moreThanOneDependencyType: true },
+    },
+    {
+      name: "not-to-deprecated",
+      severity: "warn",
+      comment: "Replace packages marked deprecated in their installed package metadata.",
+      from: { path: "^src/" },
+      to: { dependencyTypes: ["deprecated"] },
     },
     {
       name: "no-node-builtins",
@@ -165,6 +187,13 @@ const config = {
       },
     },
     {
+      name: "no-model-to-colors",
+      severity: "error",
+      comment: "Models expose domain state; views map it to the simulation's color palette.",
+      from: { path: "(^|/)model/" },
+      to: { path: "(^|/)[^/]*Colors\\.ts$", dependencyTypesNot: ["type-only"] },
+    },
+    {
       name: "no-model-to-preferences-view",
       severity: "error",
       comment: "Model code may depend on *PreferencesModel but must not import *PreferencesNode (preferences view).",
@@ -191,6 +220,13 @@ const config = {
       },
     },
     {
+      name: "no-unreachable-from-entry",
+      severity: "error",
+      comment: "Source modules must be reachable from the application entry point. Put test-only helpers in tests/.",
+      from: { path: ENTRY_PATH },
+      to: { path: "^src/", pathNot: `${ENTRY_PATH}|\\.d\\.(c|m)?ts$`, reachable: false },
+    },
+    {
       name: "no-orphans",
       severity: "error",
       comment:
@@ -213,8 +249,9 @@ const config = {
     parser: "swc",
     enhancedResolveOptions: {
       exportsFields: ["exports"],
-      conditionNames: ["import", "require", "node", "default", "types"],
-      mainFields: ["module", "main", "types", "typings"],
+      conditionNames: ["import", "browser", "module", "default", "types"],
+      aliasFields: ["browser"],
+      mainFields: ["browser", "module", "main", "types", "typings"],
     },
   },
 };
