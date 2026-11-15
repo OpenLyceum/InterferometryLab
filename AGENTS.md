@@ -73,10 +73,6 @@ micrometer, mirror tilt) only reach their useful precision via shift-arrow.
   which is physics, not styling. Every *themeable* colour lives in `InterferometryLabColors.ts`.
   `scenery-phet`'s `VisibleColor` is deliberately not used for anything that gets summed, for the
   reasons in the implementation notes.
-- **`tests/memory-leak.test.ts` diverges from the template**: its `forceGC()` takes a predicate
-  and exits early. The template's version runs all fifteen `gc()` passes unconditionally in its
-  last test and exceeds the 30 s timeout in this environment — it fails on a pristine template
-  checkout too, so this is a fix rather than a deviation. Worth upstreaming.
 
 ## Testing
 
