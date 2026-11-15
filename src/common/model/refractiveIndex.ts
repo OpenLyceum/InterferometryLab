@@ -32,6 +32,7 @@ const BK7_TERMS = [
  * is what destroys white-light fringes in an uncompensated Michelson.
  *
  * @param wavelengthNm - vacuum wavelength, nm
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function bk7Index(wavelengthNm: number): number {
   const um2 = (wavelengthNm / 1000) ** 2;

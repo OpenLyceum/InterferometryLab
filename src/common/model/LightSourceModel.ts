@@ -160,6 +160,7 @@ export class LightSourceModel {
 /**
  * Builds the spectrum for a source. Kept as a free function so tests can call it
  * without constructing Properties.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function buildSpectrum(type: SourceType, filterWavelengthNm: number, filterBandwidthNm: number): SourceSpectrum {
   if (type === SourceType.SODIUM_LAMP) {

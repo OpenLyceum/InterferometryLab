@@ -22,6 +22,7 @@ const TWO_PI = 2 * Math.PI;
  *
  * The `cos θ` is the entire reason a Michelson shows rings: an off-axis ray
  * crosses the arm difference at a slant, so it sees slightly less of it.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function axialCosine(geometry: FringeGeometry, u: number, v: number): number {
   const tanTheta = geometry.apertureTanTheta * Math.sqrt(u * u + v * v);
@@ -114,6 +115,7 @@ export function airyPeakTransmission(reflectance: number, absorptance: number): 
 /**
  * Coefficient of finesse F = 4R/(1 − R)², the sharpness parameter of the Airy
  * distribution. It grows without bound as R → 1.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function coefficientOfFinesse(reflectance: number): number {
   const denominator = 1 - reflectance;

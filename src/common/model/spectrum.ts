@@ -53,6 +53,7 @@ export type SpectralGroup = {
 
 /**
  * Standard deviation in wavelength (nm) of a line with the given FWHM.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function fwhmToSigma(fwhmNm: number): number {
   return fwhmNm / FWHM_TO_SIGMA;
@@ -62,6 +63,7 @@ export function fwhmToSigma(fwhmNm: number): number {
  * Standard deviation in angular wavenumber (rad/nm) of a Gaussian line.
  * Uses the narrow-band relation |dk/dλ| = 2π/λ², which is exact to first order
  * and better than 0.1 % for every line this sim can produce.
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function spectralSigmaK(centerNm: number, fwhmNm: number): number {
   return (2 * Math.PI * fwhmToSigma(fwhmNm)) / (centerNm * centerNm);
@@ -105,6 +107,7 @@ export function coherenceLength(centerNm: number, fwhmNm: number): number {
  * @param opdNm - optical path difference, nm
  * @param centerNm - mean wavelength of the pair, nm
  * @param separationNm - wavelength difference between the lines, nm
+ * @internal Exported for unit tests; not part of the application API.
  */
 export function doubletVisibility(opdNm: number, centerNm: number, separationNm: number): number {
   return Math.abs(Math.cos((Math.PI * opdNm * separationNm) / (centerNm * centerNm)));
@@ -171,7 +174,10 @@ export function normalizeWeights(groups: readonly SpectralGroup[]): SpectralGrou
   return groups.map((group) => ({ ...group, weight: group.weight / total }));
 }
 
-/** Power-weighted mean wavelength (nm) of a spectrum. */
+/**
+ * Power-weighted mean wavelength (nm) of a spectrum.
+ * @internal Exported for unit tests; not part of the application API.
+ */
 export function meanWavelength(groups: readonly SpectralGroup[]): number {
   const total = groups.reduce((sum, group) => sum + group.weight, 0);
   if (total <= 0) {
