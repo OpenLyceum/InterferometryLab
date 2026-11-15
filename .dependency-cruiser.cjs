@@ -192,7 +192,7 @@ const config = {
     },
     {
       name: "no-orphans",
-      severity: "warn",
+      severity: "error",
       comment:
         "Orphan module under src/ (no incoming or outgoing dependencies). Remove it, wire it up, or exclude it in a local overlay if it is an intentional unused toolkit stub.",
       from: {
