@@ -29,7 +29,7 @@
     "check": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.test.json --noEmit",
     "check:unused": "knip",
     "check:architecture": "depcruise src",
-    "release": "npm run check && npm run lint && npm run build && npm test && npm version patch && git push && git push --tags",
+    "release": "npm run check && npm run lint && npm run check:architecture && npm run build && npm test && npm version patch && git push && git push --tags",
     "watch": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -39,7 +39,8 @@
     "icons": "node scripts/generate-icons.ts",
     "clean": "rm -rf dist",
     "prepare": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
-    "knip": "knip"
+    "knip": "knip",
+    "test:architecture": "node --test tests/architecture.test.mjs"
   },
   "dependencies": {
     "scenerystack": "^3.0.0"

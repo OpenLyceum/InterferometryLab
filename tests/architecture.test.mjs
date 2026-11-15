@@ -1,0 +1,218 @@
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { test } from "node:test";
+
+const root = fileURLToPath(new URL("../", import.meta.url));
+const cli = join(root, "node_modules/dependency-cruiser/bin/dependency-cruiser.mjs");
+
+// Use the actual CLI, parser and resolver: matching regexes alone misses graph regressions.
+function cruise(files, overlay, guidance = "") {
+  const directory = mkdtempSync(join(tmpdir(), "architecture-"));
+  try {
+    copyFileSync(join(root, ".dependency-cruiser.cjs"), join(directory, ".dependency-cruiser.cjs"));
+    mkdirSync(join(directory, "node_modules"));
+    for (const name of ["scenerystack", "vitest"]) {
+      symlinkSync(join(root, "node_modules", name), join(directory, "node_modules", name), "dir");
+    }
+    const contents = {
+      "package.json": JSON.stringify({
+        type: "module",
+        dependencies: { scenerystack: "*" },
+        devDependencies: { vitest: "*" },
+      }),
+      "AGENTS.md": guidance,
+      "node_modules/undeclared-fixture/package.json": JSON.stringify({ name: "undeclared-fixture", main: "index.js" }),
+      "node_modules/undeclared-fixture/index.js": "export const value = 1;",
+      ...files,
+    };
+    if (overlay !== undefined) {
+      contents[".dependency-cruiser.local.cjs"] = overlay;
+    }
+    for (const [name, source] of Object.entries(contents)) {
+      mkdirSync(dirname(join(directory, name)), { recursive: true });
+      writeFileSync(join(directory, name), source);
+    }
+    const result = spawnSync(process.execPath, [cli, "src", "--output-type", "err"], {
+      cwd: directory,
+      encoding: "utf8",
+      timeout: 20_000,
+    });
+    assert.ifError(result.error);
+    return result;
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+function violations(result) {
+  assert.equal(result.stderr, "", result.stderr);
+  return [...result.stdout.matchAll(/^\s+(?:error|warn|info) ([^:]+):/gm)].map((match) => match[1]);
+}
+
+const forbidden = [
+  ["no-unresolved", { "src/main.ts": 'import "./Imagined.js";' }],
+  ["no-undeclared-packages", { "src/main.ts": 'import "undeclared-fixture";' }],
+  ["no-node-builtins", { "src/main.ts": 'import { readFileSync } from "node:fs";' }],
+  [
+    "no-src-to-tooling",
+    { "src/main.ts": 'import "../scripts/helper.js";', "scripts/helper.ts": "export const x = 1;" },
+  ],
+  ["no-src-to-tests", { "src/main.ts": 'import "../tests/helper.js";', "tests/helper.ts": "export const x = 1;" }],
+  ["not-to-dev-dep", { "src/main.test.ts": 'import { test } from "vitest";' }],
+  ["no-app-to-bootstrap", { "src/common/helper.ts": 'import "../init.js";', "src/init.ts": "export const x = 1;" }],
+  [
+    "no-model-to-view",
+    { "src/lab/model/Model.ts": 'import "../view/View.js";', "src/lab/view/View.ts": "export const x = 1;" },
+  ],
+  [
+    "no-model-to-view-transitive",
+    {
+      "src/lab/model/Model.ts": 'import "../../common/barrel.js";',
+      "src/common/barrel.ts": 'export * from "../common/view/View.js";',
+      "src/common/view/View.ts": "export const x = 1;",
+    },
+  ],
+  ["no-model-to-ui-packages", { "src/lab/model/Model.ts": 'import { Node } from "scenerystack/scenery";' }],
+  ["no-model-to-ui-packages", { "src/lab/model/Model.ts": 'import { Panel } from "scenerystack/sun";' }],
+  [
+    "no-model-to-preferences-view",
+    {
+      "src/lab/model/Model.ts": 'import "../../preferences/SimPreferencesNode.js";',
+      "src/preferences/SimPreferencesNode.ts": "export const x = 1;",
+    },
+  ],
+  ...["common", "preferences", "i18n"].map((folder) => [
+    `no-${folder}-to-screen`,
+    {
+      [`src/${folder}/helper.ts`]: 'import "../lab/model/Model.js";',
+      "src/lab/model/Model.ts": "export const x = 1;",
+    },
+  ]),
+  [
+    "no-assets-to-app",
+    { "src/assets/data.ts": 'import "../common/helper.js";', "src/common/helper.ts": "export const x = 1;" },
+  ],
+  [
+    "no-cross-screen",
+    {
+      "src/intro/model/Model.ts": 'import "../../lab/model/Model.js";',
+      "src/lab/model/Model.ts": "export const x = 1;",
+    },
+  ],
+  [
+    "no-cross-screen",
+    {
+      "src/intro/model/Model.ts": 'void import("../../lab/model/Model.js");',
+      "src/lab/model/Model.ts": "export const x = 1;",
+    },
+  ],
+  ["no-circular", { "src/common/a.ts": 'import "./b.js";', "src/common/b.ts": 'import "./a.js";' }],
+];
+
+for (const [rule, files] of forbidden) {
+  test(`rejects ${rule}: ${Object.keys(files)[0]}`, () => {
+    const result = cruise(files);
+    assert.ok(violations(result).includes(rule), result.stdout);
+    assert.notEqual(result.status, 0);
+  });
+}
+
+test("allows bootstrap metadata, same-screen imports, shared models, and type-only UI imports", () => {
+  const result = cruise({
+    "src/main.ts": 'import "./brand.js"; import "./intro/Screen.js";',
+    "src/brand.ts": 'import "./splash.js";',
+    "src/splash.ts": 'import "./assert.js";',
+    "src/assert.ts": 'import "./init.js";',
+    "src/init.ts": 'import metadata from "../package.json"; export const name = metadata.name;',
+    "src/intro/Screen.ts": 'import "./model/Model.js"; import "./view/View.js";',
+    "src/intro/model/Model.ts":
+      'import type { Node } from "scenerystack/scenery"; import "../../common/model/SharedModel.js";',
+    "src/common/model/SharedModel.ts":
+      'import { NumberProperty } from "scenerystack/axon"; export const value = new NumberProperty(0);',
+    "src/intro/view/View.ts": 'import "../model/Model.js";',
+  });
+  assert.deepEqual(violations(result), [], result.stdout);
+  assert.equal(result.status, 0);
+});
+
+const source = { "src/main.ts": 'import "./missing.js";' };
+for (const [description, overlay] of [
+  ["missing overlay dependency", 'require("./absent.cjs");'],
+  ["overlay runtime exception", 'throw new Error("overlay exploded");'],
+  ["malformed overlay", "module.exports = null;"],
+  ["unknown rule omission", 'module.exports = { omitRules: ["typo"] };'],
+  ["undocumented rule omission", 'module.exports = { omitRules: ["no-unresolved"] };'],
+  ["parser override", 'module.exports = { options: { parser: "tsc" } };'],
+  [
+    "duplicate rule",
+    'module.exports = { forbidden: [{ name: "no-unresolved", severity: "ignore", from: {}, to: {} }] };',
+  ],
+  ["undocumented exclusion", 'module.exports = { options: { exclude: "^src/main\\\\.ts$" } };'],
+]) {
+  test(`fails closed on ${description}`, () => {
+    const result = cruise(source, overlay);
+    assert.notEqual(result.status, 0);
+    assert.ok(result.stderr.length > 0, result.stdout);
+  });
+}
+
+test("accepts an explicitly documented rule omission", () => {
+  const result = cruise(
+    source,
+    'module.exports = { omitRules: ["no-unresolved"] };',
+    "## Compliance carve-outs\n- `no-unresolved`: fixture intentionally imports a missing file.\n",
+  );
+  assert.ok(!violations(result).includes("no-unresolved"));
+});
+
+test("accepts documented file exclusions without changing remaining rules", () => {
+  const result = cruise(
+    { ...source, "src/common/unsupported.ts": "export const unused = 1;" },
+    'module.exports = { options: { exclude: { path: ["^src/common/unsupported\\\\.ts$"] } } };',
+    "## Compliance carve-outs\n- `.dependency-cruiser.local.cjs`: skip a parser-unsupported fixture.\n",
+  );
+  assert.deepEqual(violations(result), ["no-unresolved"]);
+});
+
+test("allows cycles broken by an erased type-only edge", () => {
+  const result = cruise({
+    "src/main.ts": 'import "./common/a.js";',
+    "src/common/a.ts": 'import { value } from "./b.js"; export type A = typeof value;',
+    "src/common/b.ts": 'import type { A } from "./a.js"; export const value = 1;',
+  });
+  assert.deepEqual(violations(result), [], result.stdout);
+  assert.equal(result.status, 0);
+});
+
+test("accepts additional uniquely named local rules", () => {
+  const result = cruise(
+    { "src/main.ts": 'import "./common/helper.js";', "src/common/helper.ts": "export const x = 1;" },
+    'module.exports = { forbidden: [{ name: "local-boundary", severity: "error", from: { path: "^src/main" }, to: { path: "^src/common/" } }] };',
+  );
+  assert.deepEqual(violations(result), ["local-boundary"]);
+  assert.notEqual(result.status, 0);
+});
+
+test("rejects an exclusion that matches everything, even when documented", () => {
+  const result = cruise(
+    source,
+    'module.exports = { options: { exclude: ".*" } };',
+    "## Compliance carve-outs\n- `.dependency-cruiser.local.cjs`: intentionally overbroad fixture.\n",
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /must not match the empty string/);
+});
+
+
+test("allows static images outside src while rejecting executable asset helpers", () => {
+  const image = cruise({ "src/main.ts": 'import image from "../assets/photo.jpg";', "assets/photo.jpg": "image fixture" });
+  assert.deepEqual(violations(image), [], image.stdout);
+  assert.equal(image.status, 0);
+  const helper = cruise({ "src/main.ts": 'import "../assets/helper.js";', "assets/helper.ts": "export const value = 1;" });
+  assert.ok(violations(helper).includes("no-src-to-tooling"), helper.stdout);
+  assert.notEqual(helper.status, 0);
+});

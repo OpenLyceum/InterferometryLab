@@ -1,5 +1,5 @@
 #!/bin/sh
-# Pre-push hook: run lint and type-check before pushing.
+# Pre-push hook: run lint, type-check and architecture checks before pushing.
 # Activated by: npm install (prepare script sets core.hooksPath)
 
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
@@ -26,6 +26,12 @@ TSC_STATUS=$?
 if [ "$TSC_STATUS" -ne 0 ]; then
   echo ""
   echo "TypeScript errors found. Fix the errors above before pushing."
+  exit 1
+fi
+
+echo "Checking architecture boundaries..."
+if ! npm run check:architecture; then
+  echo "Architecture violations found. Fix the imports or document a narrow carve-out in AGENTS.md."
   exit 1
 fi
 
