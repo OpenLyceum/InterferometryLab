@@ -132,7 +132,7 @@ export type MultiBeamTerms = {
   readonly extraPhaseRad: number;
 };
 
-export type InterferenceTerms = TwoBeamTerms | MultiBeamTerms;
+type InterferenceTerms = TwoBeamTerms | MultiBeamTerms;
 
 /**
  * A complete description of the pattern on a detector: where the light is, what

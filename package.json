@@ -36,7 +36,8 @@
     "test:fuzz:long": "node scripts/test-fuzz.ts 300",
     "icons": "node scripts/generate-icons.ts",
     "clean": "rm -rf dist",
-    "prepare": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
+    "prepare": "git rev-parse --is-inside-work-tree >/dev/null 2>&1 && git config core.hooksPath .githooks || true",
+    "knip": "knip"
   },
   "dependencies": {
     "scenerystack": "^3.0.0"
@@ -46,6 +47,7 @@
     "@playwright/test": "^1.65.0",
     "@types/node": "^26.6.6",
     "happy-dom": "^21.0.4",
+    "knip": "^6.45.1",
     "png-to-ico": "^3.0.2",
     "sharp": "^0.35.5",
     "typescript": "^7.0.2",

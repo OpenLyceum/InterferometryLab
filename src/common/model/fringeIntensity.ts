@@ -201,7 +201,7 @@ export function intensityAt(spec: FringeSpec, u: number, v: number, out: Float64
  * the pattern would read. Screens use this for their numeric readouts and, in
  * the Mach-Zehnder, to decide where single photons land.
  */
-export function axialIntensity(spec: FringeSpec): number {
+function axialIntensity(spec: FringeSpec): number {
   const scratch = new Float64Array(spec.groups.length);
   return intensityAt(spec, 0, 0, scratch);
 }

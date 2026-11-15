@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "project": ["src/**/*.ts", "scripts/**/*.{ts,js,mjs,cjs}", "tests/**/*.ts", "*.{ts,js,mjs,cjs}"],
+  "entry": [],
+  "ignoreFiles": [],
+  "ignoreDependencies": [],
+  "ignoreUnresolved": [],
+  "ignoreBinaries": []
+}

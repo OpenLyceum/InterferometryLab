@@ -119,7 +119,7 @@ export const GAS_CELL_LENGTH_NM = 50 * NM_PER_MM;
  * detector. It converts a detector radius into a ray angle (tan θ = ρ / f),
  * which is what turns optical path difference into rings.
  */
-export const DETECTOR_FOCAL_LENGTH_NM = 250 * NM_PER_MM;
+const DETECTOR_FOCAL_LENGTH_NM = 250 * NM_PER_MM;
 
 /**
  * Half-width (nm) of the square detector — a 100 mm screen, giving a half-angle
@@ -128,7 +128,7 @@ export const DETECTOR_FOCAL_LENGTH_NM = 250 * NM_PER_MM;
  * coarse travel this shows about a dozen of them, and they collapse into the
  * centre as the arms are equalized, which is the behaviour being taught.
  */
-export const DETECTOR_HALF_WIDTH_NM = 50 * NM_PER_MM;
+const DETECTOR_HALF_WIDTH_NM = 50 * NM_PER_MM;
 
 /**
  * Ratio tan θ / ρ of detector half-width to focal length — the constant that

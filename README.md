@@ -69,6 +69,7 @@ npm start        # dev server → http://localhost:5173
 | `npm run test:fuzz:long` | Longer fuzz smoke (300s) |
 | `npm run check` | TypeScript type check |
 | `npm run lint` | Biome lint check |
+| `npm run knip` | Report unused files, exports, and dependencies (manual check) |
 | `npm run format` | Auto-format all files |
 | `npm run fix` | Lint + auto-fix |
 | `npm run icons` | Regenerate PNG icons from `public/icons/icon.svg` |
