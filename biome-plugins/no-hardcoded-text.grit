@@ -1,0 +1,24 @@
+// Flags display words hardcoded as the text of a Text or RichText node. Display text
+// belongs in strings_*.json and reaches the view as a *StringProperty from StringManager,
+// so it can be translated. A "word" is three or more letters with lowercase after the
+// first ("Mass", "reset"), so symbols, units and formulas pass ("z", "pH", "Hz", "KNO₃",
+// "mc²"), and RichText tags such as <sup> are not words. In a template literal only the
+// literal chunks are checked, so `${value}` passes.
+// Suppress a deliberate use with: // biome-ignore lint/plugin/no-hardcoded-text: <reason>
+// GritQL regexes here must use non-capturing groups (?:...); a plain (...) silently never matches.
+language js
+
+`new $node($text, $...)` where {
+  $node <: or { `Text`, `RichText` },
+  or {
+    $text <: JsStringLiteralExpression() where { $text <: r"(?s)(?:.*[^A-Za-z</])?[A-Za-z][a-z]{2,}.*" },
+    $text <: JsTemplateExpression() where {
+      $text <: contains JsTemplateChunkElement() as $chunk where { $chunk <: r"(?s)(?:.*[^A-Za-z</])?[A-Za-z][a-z]{2,}.*" }
+    }
+  },
+  register_diagnostic(
+    span = $text,
+    message = "Display text must come from StringManager (a *StringProperty), not a literal, so it can be translated.",
+    severity = "warn"
+  )
+}

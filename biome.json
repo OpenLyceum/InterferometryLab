@@ -167,7 +167,15 @@
   "overrides": [
     {
       "includes": ["src/**"],
-      "plugins": ["./biome-plugins/no-native-tofixed.grit"],
+      "plugins": [
+        "./biome-plugins/no-native-tofixed.grit",
+        "./biome-plugins/no-math-random.grit",
+        "./biome-plugins/no-hardcoded-text.grit",
+        {
+          "path": "./biome-plugins/no-inline-color.grit",
+          "includes": ["**", "!**/*Colors.ts"]
+        }
+      ],
       "linter": {
         "rules": {
           "nursery": {

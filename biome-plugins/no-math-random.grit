@@ -1,0 +1,12 @@
+// Flags Math.random(). Use dotRandom from scenerystack/dot so a run can be seeded
+// and replayed, which keeps physics and fuzz failures reproducible.
+// Suppress a deliberate use with: // biome-ignore lint/plugin/no-math-random: <reason>
+language js
+
+`Math.random()` as $call where {
+  register_diagnostic(
+    span = $call,
+    message = "Use dotRandom.nextDouble() from scenerystack/dot instead of Math.random(), so runs can be seeded and replayed.",
+    severity = "warn"
+  )
+}
