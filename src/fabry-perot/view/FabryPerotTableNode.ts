@@ -1,3 +1,4 @@
+import { FABRY_PEROT_TABLE_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * FabryPerotTableNode.ts
  *
@@ -29,25 +30,25 @@ import type { InterferometryLabPreferencesModel } from "../../preferences/Interf
 import type { FabryPerotModel } from "../model/FabryPerotModel.js";
 
 /** Table size, view pixels. */
-const TABLE_WIDTH = 300;
-const TABLE_HEIGHT = 252;
+const TABLE_WIDTH: number = FABRY_PEROT_TABLE_NODE_SETTINGS.TABLE_WIDTH;
+const TABLE_HEIGHT: number = FABRY_PEROT_TABLE_NODE_SETTINGS.TABLE_HEIGHT;
 
 /** Layout along the optical axis, table-local coordinates. */
-const AXIS_Y = 132;
-const SOURCE_X = 44;
-const FIRST_MIRROR_X = 108;
-const SECOND_MIRROR_X = 162;
-const LENS_X = 212;
-const SCREEN_X = 262;
+const AXIS_Y: number = FABRY_PEROT_TABLE_NODE_SETTINGS.AXIS_Y;
+const SOURCE_X: number = FABRY_PEROT_TABLE_NODE_SETTINGS.SOURCE_X;
+const FIRST_MIRROR_X: number = FABRY_PEROT_TABLE_NODE_SETTINGS.FIRST_MIRROR_X;
+const SECOND_MIRROR_X: number = FABRY_PEROT_TABLE_NODE_SETTINGS.SECOND_MIRROR_X;
+const LENS_X: number = FABRY_PEROT_TABLE_NODE_SETTINGS.LENS_X;
+const SCREEN_X: number = FABRY_PEROT_TABLE_NODE_SETTINGS.SCREEN_X;
 
 /** Height of the mirrors and screen, view pixels. */
-const OPTIC_HEIGHT = 74;
+const OPTIC_HEIGHT: number = FABRY_PEROT_TABLE_NODE_SETTINGS.OPTIC_HEIGHT;
 
 /** How many internal round trips are drawn before the beam is too faint to see. */
-const DRAWN_BOUNCES = 4;
+const DRAWN_BOUNCES: number = FABRY_PEROT_TABLE_NODE_SETTINGS.DRAWN_BOUNCES;
 
 /** Vertical offset between successive drawn bounces, view pixels. */
-const BOUNCE_STEP = 9;
+const BOUNCE_STEP: number = FABRY_PEROT_TABLE_NODE_SETTINGS.BOUNCE_STEP;
 
 export class FabryPerotTableNode extends Node {
   public constructor(model: FabryPerotModel, preferences: InterferometryLabPreferencesModel) {
@@ -91,7 +92,7 @@ export class FabryPerotTableNode extends Node {
 
     beams.push(new BeamPathNode([new Vector2(LENS_X, AXIS_Y), new Vector2(SCREEN_X, AXIS_Y)], beamColor));
 
-    const source = createSourceNode(46, 22, beamColor);
+    const source = createSourceNode(46, FABRY_PEROT_TABLE_NODE_SETTINGS.SOURCE_HEIGHT, beamColor);
     source.translation = new Vector2(SOURCE_X, AXIS_Y);
 
     const firstMirror = createMirrorNode(OPTIC_HEIGHT, { partial: true });
@@ -102,7 +103,7 @@ export class FabryPerotTableNode extends Node {
     secondMirror.rotation = -Math.PI / 2;
     secondMirror.translation = new Vector2(SECOND_MIRROR_X, AXIS_Y);
 
-    const lens = createLensNode(60, 9);
+    const lens = createLensNode(FABRY_PEROT_TABLE_NODE_SETTINGS.LENS_HEIGHT, 9);
     lens.translation = new Vector2(LENS_X, AXIS_Y);
 
     const screen = createDetectorPlateNode(OPTIC_HEIGHT);
@@ -110,8 +111,8 @@ export class FabryPerotTableNode extends Node {
     screen.translation = new Vector2(SCREEN_X, AXIS_Y);
 
     const sourceLabel = createTableLabel(common.sourceStringProperty);
-    sourceLabel.centerX = SOURCE_X - 8;
-    sourceLabel.top = AXIS_Y + 16;
+    sourceLabel.centerX = SOURCE_X - FABRY_PEROT_TABLE_NODE_SETTINGS.CONSTRUCTOR_CENTER_X_OFFSET;
+    sourceLabel.top = AXIS_Y + FABRY_PEROT_TABLE_NODE_SETTINGS.CONSTRUCTOR_TOP_OFFSET;
 
     const cavityLabel = createTableLabel(fabryPerot.cavityStringProperty);
     cavityLabel.centerX = (FIRST_MIRROR_X + SECOND_MIRROR_X) / 2;

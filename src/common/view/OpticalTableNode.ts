@@ -1,3 +1,4 @@
+import { OPTICAL_TABLE_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * OpticalTableNode.ts
  *
@@ -14,7 +15,7 @@ import InterferometryLabColors from "../../InterferometryLabColors.js";
 import { PANEL_CORNER_RADIUS } from "../../InterferometryLabConstants.js";
 
 /** Spacing of the mounting-hole grid, view pixels. */
-const GRID_SPACING = 25;
+const GRID_SPACING: number = OPTICAL_TABLE_NODE_SETTINGS.GRID_SPACING;
 
 export class OpticalTableNode extends Node {
   /**
@@ -41,7 +42,7 @@ export class OpticalTableNode extends Node {
 
     const grid = new Path(gridShape, {
       stroke: InterferometryLabColors.tableGridColorProperty,
-      lineWidth: 0.5,
+      lineWidth: OPTICAL_TABLE_NODE_SETTINGS.GRID_LINE_WIDTH,
       // Keep the grid inside the rounded corners.
       clipArea: Shape.roundRect(0, 0, width, height, PANEL_CORNER_RADIUS, PANEL_CORNER_RADIUS),
     });

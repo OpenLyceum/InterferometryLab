@@ -1,3 +1,4 @@
+import { FABRY_PEROT_CAVITY_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * FabryPerotCavityPanel.ts
  *
@@ -38,10 +39,10 @@ export class FabryPerotCavityPanel extends TitledPanel {
       {
         accessibleName: a11y.reflectanceStringProperty,
         decimals: 2,
-        delta: 0.01,
-        keyboardStep: 0.01,
-        shiftKeyboardStep: 0.005,
-        pageKeyboardStep: 0.1,
+        delta: FABRY_PEROT_CAVITY_PANEL_SETTINGS.REFLECTANCE_CONTROL_DELTA,
+        keyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.REFLECTANCE_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.REFLECTANCE_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.REFLECTANCE_CONTROL_PAGE_KEYBOARD_STEP,
         majorTicks: [
           { value: REFLECTANCE_RANGE.min, label: "0.04" },
           { value: REFLECTANCE_RANGE.max, label: "0.99" },
@@ -56,10 +57,10 @@ export class FabryPerotCavityPanel extends TitledPanel {
       {
         accessibleName: a11y.absorptanceStringProperty,
         decimals: 3,
-        delta: 0.001,
-        keyboardStep: 0.005,
-        shiftKeyboardStep: 0.001,
-        pageKeyboardStep: 0.02,
+        delta: FABRY_PEROT_CAVITY_PANEL_SETTINGS.ABSORPTANCE_CONTROL_DELTA,
+        keyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.ABSORPTANCE_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.ABSORPTANCE_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.ABSORPTANCE_CONTROL_PAGE_KEYBOARD_STEP,
       },
     );
 
@@ -77,10 +78,10 @@ export class FabryPerotCavityPanel extends TitledPanel {
         accessibleName: a11y.spacingStringProperty,
         valuePattern: units.micrometersStringProperty,
         decimals: 1,
-        delta: 0.5,
-        keyboardStep: 5,
-        shiftKeyboardStep: 0.5,
-        pageKeyboardStep: 25,
+        delta: FABRY_PEROT_CAVITY_PANEL_SETTINGS.SPACING_CONTROL_DELTA,
+        keyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.SPACING_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.SPACING_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: FABRY_PEROT_CAVITY_PANEL_SETTINGS.SPACING_CONTROL_PAGE_KEYBOARD_STEP,
       },
     );
 
@@ -90,7 +91,7 @@ export class FabryPerotCavityPanel extends TitledPanel {
     // onto one a frame at a time.
     const scanControl = new VBox({
       align: "left",
-      spacing: 4,
+      spacing: FABRY_PEROT_CAVITY_PANEL_SETTINGS.SCAN_CONTROL_SPACING,
       children: [
         new Text(fabryPerot.scanCavityStringProperty, {
           font: new PhetFont(LABEL_FONT_SIZE),

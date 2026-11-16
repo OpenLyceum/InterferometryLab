@@ -1,3 +1,4 @@
+import { OPTIC_NODES_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * opticNodes.ts
  *
@@ -23,13 +24,13 @@ import InterferometryLabColors from "../../InterferometryLabColors.js";
 import { LABEL_FONT_SIZE } from "../../InterferometryLabConstants.js";
 
 /** Thickness of a mirror's reflective plate, in view pixels. */
-const MIRROR_THICKNESS = 5;
+const MIRROR_THICKNESS: number = OPTIC_NODES_SETTINGS.MIRROR_THICKNESS;
 
 /** Depth of the mount block drawn behind a mirror, in view pixels. */
-const MOUNT_DEPTH = 9;
+const MOUNT_DEPTH: number = OPTIC_NODES_SETTINGS.MOUNT_DEPTH;
 
 /** Thickness of a glass plate (beam splitter, compensator, slide), in view pixels. */
-const GLASS_THICKNESS = 6;
+const GLASS_THICKNESS: number = OPTIC_NODES_SETTINGS.GLASS_THICKNESS;
 
 /**
  * A mirror: a reflective plate with a mount behind it. Drawn centred on the
@@ -72,8 +73,8 @@ export function createBeamSplitterNode(length: number): Node {
 
   const coating = new Line(-length / 2, -GLASS_THICKNESS / 2, length / 2, -GLASS_THICKNESS / 2, {
     stroke: InterferometryLabColors.mirrorColorProperty,
-    lineWidth: 1.5,
-    lineDash: [3, 2],
+    lineWidth: OPTIC_NODES_SETTINGS.COATING_LINE_WIDTH,
+    lineDash: [OPTIC_NODES_SETTINGS.COATING_LINE_DASH_DASH, 2],
   });
 
   return new Node({ children: [plate, coating], rotation: Math.PI / 4 });
@@ -107,7 +108,7 @@ export function createSourceNode(length: number, height: number, colorProperty: 
   const body = new Rectangle(-length, -height / 2, length, height, {
     fill: InterferometryLabColors.sourceBodyColorProperty,
     stroke: InterferometryLabColors.tableBorderColorProperty,
-    cornerRadius: 2,
+    cornerRadius: OPTIC_NODES_SETTINGS.BODY_CORNER_RADIUS,
     lineWidth: 1,
   });
 
@@ -135,7 +136,7 @@ export function createGasCellNode(
   const body = new Rectangle(-length / 2, -height / 2, length, height, {
     fill: InterferometryLabColors.glassColorProperty,
     stroke: InterferometryLabColors.glassStrokeColorProperty,
-    lineWidth: 1.5,
+    lineWidth: OPTIC_NODES_SETTINGS.BODY_LINE_WIDTH,
   });
 
   const gas = new Rectangle(-length / 2 + 2, -height / 2 + 2, length - 4, height - 4, {
@@ -151,7 +152,7 @@ export function createGasCellNode(
     (x) =>
       new Line(x, -height / 2, x, height / 2, {
         stroke: InterferometryLabColors.mirrorColorProperty,
-        lineWidth: 2,
+        lineWidth: OPTIC_NODES_SETTINGS.WINDOWS_LINE_WIDTH,
       }),
   );
 
@@ -169,7 +170,7 @@ export function createDetectorPlateNode(length: number): Node {
     cornerRadius: 1,
   });
 
-  const face = new Rectangle(-length / 2, -4, length, 4, {
+  const face = new Rectangle(-length / 2, OPTIC_NODES_SETTINGS.FACE_Y, length, OPTIC_NODES_SETTINGS.FACE_HEIGHT, {
     fill: InterferometryLabColors.detectorFaceColorProperty,
     stroke: InterferometryLabColors.tableBorderColorProperty,
     lineWidth: 1,

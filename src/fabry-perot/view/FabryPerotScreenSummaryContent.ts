@@ -1,3 +1,4 @@
+import { FABRY_PEROT_SCREEN_SUMMARY_CONTENT_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * FabryPerotScreenSummaryContent.ts
  *
@@ -39,7 +40,10 @@ export class FabryPerotScreenSummaryContent extends ScreenSummaryContent {
         percentProperty(model.reflectanceProperty, 0),
         plainProperty(model.finesseProperty, 1),
         lengthProperty(model.effectiveSpacingProperty, 1),
-        lengthProperty(model.freeSpectralRangeProperty, 3),
+        lengthProperty(
+          model.freeSpectralRangeProperty,
+          FABRY_PEROT_SCREEN_SUMMARY_CONTENT_SETTINGS.FREE_SPECTRAL_RANGE_LENGTH_PROPERTY_DECIMALS,
+        ),
         resolutionDetailProperty,
       ],
       (pattern, reflectance, finesse, spacing, freeSpectralRange, resolutionDetail) =>

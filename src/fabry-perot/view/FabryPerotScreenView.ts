@@ -1,3 +1,4 @@
+import { FABRY_PEROT_SCREEN_VIEW_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * FabryPerotScreenView.ts
  *
@@ -35,11 +36,11 @@ export type FabryPerotScreenViewOptions = ScreenViewOptions;
 const PANEL_CONTENT_WIDTH = CONTROL_PANEL_WIDTH - 24;
 
 /** Side length of the ring pattern, view pixels. */
-const RING_SIZE = 216;
+const RING_SIZE: number = FABRY_PEROT_SCREEN_VIEW_SETTINGS.RING_SIZE;
 
 /** Size of the transmission plot, view pixels. */
-const PLOT_WIDTH = 370;
-const PLOT_HEIGHT = 196;
+const PLOT_WIDTH: number = FABRY_PEROT_SCREEN_VIEW_SETTINGS.PLOT_WIDTH;
+const PLOT_HEIGHT: number = FABRY_PEROT_SCREEN_VIEW_SETTINGS.PLOT_HEIGHT;
 
 export class FabryPerotScreenView extends ScreenView {
   public constructor(
@@ -68,7 +69,7 @@ export class FabryPerotScreenView extends ScreenView {
     const spectrumNode = new TransmissionSpectrumNode(model, { width: PLOT_WIDTH, height: PLOT_HEIGHT });
 
     const topRow = new HBox({
-      spacing: PANEL_SPACING + 4,
+      spacing: PANEL_SPACING + FABRY_PEROT_SCREEN_VIEW_SETTINGS.TOP_ROW_SPACING_OFFSET,
       align: "top",
       children: [tableNode, detectorNode, spectrumNode],
     });
@@ -85,7 +86,10 @@ export class FabryPerotScreenView extends ScreenView {
       { label: fabryPerot.finesseStringProperty, value: plainProperty(model.finesseProperty, 1) },
       {
         label: fabryPerot.freeSpectralRangeStringProperty,
-        value: lengthProperty(model.freeSpectralRangeProperty, 3),
+        value: lengthProperty(
+          model.freeSpectralRangeProperty,
+          FABRY_PEROT_SCREEN_VIEW_SETTINGS.FREE_SPECTRAL_RANGE_LENGTH_PROPERTY_DECIMALS,
+        ),
       },
       { label: fabryPerot.orderStringProperty, value: plainProperty(model.orderProperty, 0) },
       { label: fabryPerot.resolvingPowerStringProperty, value: plainProperty(model.resolvingPowerProperty, 0) },

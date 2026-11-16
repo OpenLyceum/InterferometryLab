@@ -13,12 +13,13 @@
 import { Circle, Node, Rectangle } from "scenerystack/scenery";
 import { ScreenIcon } from "scenerystack/sim";
 import InterferometryLabColors from "../InterferometryLabColors.js";
+import { INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS } from "../InterferometryLabConstants.js";
 
 const W = 548;
 const H = 373;
 
 /** Side of the detector square each icon is built around, view units. */
-const FACE_SIZE = 260;
+const FACE_SIZE: number = INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS.FACE_SIZE;
 
 function background(): Rectangle {
   return new Rectangle(0, 0, W, H, { fill: InterferometryLabColors.backgroundColorProperty });
@@ -29,7 +30,7 @@ function face(size: number, centerX: number): Rectangle {
   return new Rectangle(centerX - size / 2, (H - size) / 2, size, size, {
     fill: InterferometryLabColors.detectorFaceColorProperty,
     stroke: InterferometryLabColors.tableBorderColorProperty,
-    lineWidth: 2,
+    lineWidth: INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS.FACE_LINE_WIDTH,
   });
 }
 
@@ -76,7 +77,12 @@ export function createMichelsonIcon(): ScreenIcon {
       children: [
         background(),
         face(FACE_SIZE, W / 2),
-        rings(7, 14, InterferometryLabColors.accentColorProperty, W / 2),
+        rings(
+          7,
+          INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS.CREATE_MICHELSON_ICON_LINE_WIDTH,
+          InterferometryLabColors.accentColorProperty,
+          W / 2,
+        ),
       ],
     }),
   );
@@ -87,11 +93,11 @@ export function createMichelsonIcon(): ScreenIcon {
  * is dark. The pair is the Mach-Zehnder screen's whole subject.
  */
 export function createMachZehnderIcon(): ScreenIcon {
-  const portSize = 200;
+  const portSize: number = INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS.PORT_SIZE;
   const gap = 44;
   const leftX = W / 2 - (portSize + gap) / 2;
   const rightX = W / 2 + (portSize + gap) / 2;
-  const barCount = 4;
+  const barCount: number = INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS.BAR_COUNT;
   const barWidth = portSize / (2 * barCount);
 
   const bars = (centerX: number, offset: number): Node => {
@@ -129,7 +135,16 @@ export function createMachZehnderIcon(): ScreenIcon {
 export function createFabryPerotIcon(): ScreenIcon {
   return iconFrom(
     new Node({
-      children: [background(), face(FACE_SIZE, W / 2), rings(9, 6, InterferometryLabColors.valueColorProperty, W / 2)],
+      children: [
+        background(),
+        face(FACE_SIZE, W / 2),
+        rings(
+          9,
+          INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS.CREATE_FABRY_PEROT_ICON_LINE_WIDTH,
+          InterferometryLabColors.valueColorProperty,
+          W / 2,
+        ),
+      ],
     }),
   );
 }

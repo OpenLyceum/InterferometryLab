@@ -1,3 +1,4 @@
+import { INTERFEROMETRY_LAB_PREFERENCES_NODE_SETTINGS } from "../InterferometryLabConstants.js";
 /**
  * InterferometryLabPreferencesNode.ts
  *
@@ -23,20 +24,20 @@ export class InterferometryLabPreferencesNode extends VBox {
     // colors (readable on white in both default and projector profiles), not textColorProperty
     // (which is near-white in default mode and would be invisible on the white dialog).
     const header = new Text(prefStrings.titleStringProperty, {
-      font: new PhetFont({ size: 18, weight: "bold" }),
+      font: new PhetFont({ size: INTERFEROMETRY_LAB_PREFERENCES_NODE_SETTINGS.HEADER_FONT_SIZE, weight: "bold" }),
       fill: InterferometryLabColors.controlSurfaceTextColorProperty,
     });
 
     const showOpticalPathCheckbox = new Checkbox(
       preferencesModel.showOpticalPathProperty,
       new Text(prefStrings.showOpticalPathStringProperty, {
-        font: new PhetFont(14),
+        font: new PhetFont(INTERFEROMETRY_LAB_PREFERENCES_NODE_SETTINGS.SHOW_OPTICAL_PATH_CHECKBOX_FONT_SIZE),
         fill: InterferometryLabColors.controlSurfaceTextColorProperty,
       }),
       {
         checkboxColor: InterferometryLabColors.controlSurfaceTextColorProperty,
         checkboxColorBackground: InterferometryLabColors.controlSurfaceColorProperty,
-        spacing: 8,
+        spacing: INTERFEROMETRY_LAB_PREFERENCES_NODE_SETTINGS.SHOW_OPTICAL_PATH_CHECKBOX_SPACING,
         accessibleHelpText: prefStrings.showOpticalPathDescriptionStringProperty,
         ...(tandem && { tandem: tandem.createTandem("showOpticalPathCheckbox") }),
       },
@@ -44,7 +45,7 @@ export class InterferometryLabPreferencesNode extends VBox {
 
     super({
       align: "left",
-      spacing: 12,
+      spacing: INTERFEROMETRY_LAB_PREFERENCES_NODE_SETTINGS.CONSTRUCTOR_SPACING,
       children: [header, showOpticalPathCheckbox],
     });
   }

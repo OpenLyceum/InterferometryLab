@@ -1,3 +1,4 @@
+import { MACH_ZEHNDER_MODEL_SETTINGS, MACHZEHNDERMODEL_TIME_STEP } from "../../InterferometryLabConstants.js";
 /**
  * MachZehnderModel.ts
  *
@@ -56,19 +57,19 @@ import {
 import { BeamMode } from "./BeamMode.js";
 
 /** Half the light takes each route. */
-const ROUTE_INTENSITY = 0.5;
+const ROUTE_INTENSITY: number = MACH_ZEHNDER_MODEL_SETTINGS.ROUTE_INTENSITY;
 
 /** Two equal routes peak at 2; halving puts a bright fringe at full scale. */
-const EXPOSURE = 0.5;
+const EXPOSURE: number = MACH_ZEHNDER_MODEL_SETTINGS.EXPOSURE;
 
 /** One frame's worth of emission, seconds — what the step-forward button advances. */
-const MANUAL_STEP_DT = 1 / 60;
+const MANUAL_STEP_DT: number = MACHZEHNDERMODEL_TIME_STEP.SECONDS;
 
 /** Minimum quadrature resolution along an axis with a nonzero mirror wedge. */
-const MIN_PORT_SAMPLES = 24;
+const MIN_PORT_SAMPLES: number = MACH_ZEHNDER_MODEL_SETTINGS.MIN_PORT_SAMPLES;
 
 /** Samples per shortest-wavelength fringe, to keep the port average free of aliasing. */
-const PORT_SAMPLES_PER_FRINGE = 8;
+const PORT_SAMPLES_PER_FRINGE: number = MACH_ZEHNDER_MODEL_SETTINGS.PORT_SAMPLES_PER_FRINGE;
 
 /**
  * A photon landing on a detector: where it hit, in detector coordinates.
@@ -182,12 +183,18 @@ export class MachZehnderModel implements TModel {
     this.tiltVerticalProperty = new NumberProperty(0, { range: MIRROR_TILT_RANGE_URAD });
 
     this.sampleEnabledProperty = new BooleanProperty(false);
-    this.sampleThicknessProperty = new NumberProperty(20, { range: SAMPLE_THICKNESS_RANGE_UM });
-    this.sampleIndexProperty = new NumberProperty(1.5, { range: SAMPLE_INDEX_RANGE });
+    this.sampleThicknessProperty = new NumberProperty(MACH_ZEHNDER_MODEL_SETTINGS.SAMPLE_THICKNESS_DEFAULT, {
+      range: SAMPLE_THICKNESS_RANGE_UM,
+    });
+    this.sampleIndexProperty = new NumberProperty(MACH_ZEHNDER_MODEL_SETTINGS.SAMPLE_INDEX_DEFAULT, {
+      range: SAMPLE_INDEX_RANGE,
+    });
     this.sampleTiltProperty = new NumberProperty(0, { range: SAMPLE_TILT_RANGE_DEG });
 
     this.beamModeProperty = new EnumerationProperty(BeamMode.CONTINUOUS);
-    this.photonRateProperty = new NumberProperty(400, { range: PHOTON_RATE_RANGE });
+    this.photonRateProperty = new NumberProperty(MACH_ZEHNDER_MODEL_SETTINGS.PHOTON_RATE_DEFAULT, {
+      range: PHOTON_RATE_RANGE,
+    });
     this.whichPathProperty = new BooleanProperty(false);
 
     this.countsAProperty = new NumberProperty(0);

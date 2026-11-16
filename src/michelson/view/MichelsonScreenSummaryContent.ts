@@ -1,3 +1,4 @@
+import { MICHELSON_SCREEN_SUMMARY_CONTENT_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MichelsonScreenSummaryContent.ts
  *
@@ -22,13 +23,13 @@ import type { MichelsonModel } from "../model/MichelsonModel.js";
  * Below this contrast the pattern is described as washed out; the fringes are
  * still there mathematically but nobody could read them off the screen.
  */
-const WASHED_OUT_VISIBILITY = 0.08;
+const WASHED_OUT_VISIBILITY: number = MICHELSON_SCREEN_SUMMARY_CONTENT_SETTINGS.WASHED_OUT_VISIBILITY;
 
 /**
  * Tilt (µrad) above which the wedge dominates the ray-angle term and the rings
  * have straightened into bars.
  */
-const STRAIGHT_FRINGE_TILT_URAD = 25;
+const STRAIGHT_FRINGE_TILT_URAD: number = MICHELSON_SCREEN_SUMMARY_CONTENT_SETTINGS.STRAIGHT_FRINGE_TILT_URAD;
 
 export class MichelsonScreenSummaryContent extends ScreenSummaryContent {
   public constructor(model: MichelsonModel) {

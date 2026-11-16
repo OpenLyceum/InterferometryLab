@@ -1,3 +1,4 @@
+import { PHOTON_MARKS_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * PhotonMarksNode.ts
  *
@@ -19,10 +20,10 @@ import InterferometryLabColors from "../../InterferometryLabColors.js";
 import type { PhotonMark } from "../model/MachZehnderModel.js";
 
 /** Side length of a single detection mark, view pixels. */
-const MARK_SIZE = 2;
+const MARK_SIZE: number = PHOTON_MARKS_NODE_SETTINGS.MARK_SIZE;
 
 /** Opacity of one mark, so overlapping detections accumulate. */
-const MARK_OPACITY = 0.55;
+const MARK_OPACITY: number = PHOTON_MARKS_NODE_SETTINGS.MARK_OPACITY;
 
 export class PhotonMarksNode extends CanvasNode {
   private readonly marks: readonly PhotonMark[];

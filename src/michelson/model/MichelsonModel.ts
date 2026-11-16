@@ -1,3 +1,4 @@
+import { MICHELSON_MODEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MichelsonModel.ts
  *
@@ -48,19 +49,19 @@ import {
  * single flat tone, which is a confusing thing to open on. Twenty micrometres
  * puts a few rings on the screen immediately.
  */
-const INITIAL_COARSE_OFFSET_NM = 20000;
+const INITIAL_COARSE_OFFSET_NM: number = MICHELSON_MODEL_SETTINGS.INITIAL_COARSE_OFFSET_NM;
 
 /**
  * Half the light goes each way at the splitter, so each route delivers half the
  * power to the detector.
  */
-const ROUTE_INTENSITY = 0.5;
+const ROUTE_INTENSITY: number = MICHELSON_MODEL_SETTINGS.ROUTE_INTENSITY;
 
 /**
  * Display gain. Two equal routes give an intensity between 0 and 2, so halving
  * it puts a bright fringe exactly at full scale.
  */
-const EXPOSURE = 0.5;
+const EXPOSURE: number = MICHELSON_MODEL_SETTINGS.EXPOSURE;
 
 export class MichelsonModel implements TModel {
   /** The lamp or laser illuminating the interferometer. */

@@ -1,3 +1,4 @@
+import { LIGHT_SOURCE_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * LightSourcePanel.ts
  *
@@ -53,7 +54,7 @@ export class LightSourcePanel extends TitledPanel {
           new Text(label, {
             font: new PhetFont(LABEL_FONT_SIZE),
             fill: LIGHT_SURFACE_TEXT_FILL,
-            maxWidth: 150,
+            maxWidth: LIGHT_SOURCE_PANEL_SETTINGS.ITEMS_MAX_WIDTH,
           }),
         accessibleName: label,
       };
@@ -63,8 +64,8 @@ export class LightSourcePanel extends TitledPanel {
       ...INTERFEROMETRY_LAB_COMBO_BOX_OPTIONS,
       accessibleName: options.accessibleNames.sourcePicker,
       listPosition: "below",
-      xMargin: 8,
-      yMargin: 4,
+      xMargin: LIGHT_SOURCE_PANEL_SETTINGS.SOURCE_COMBO_BOX_X_MARGIN,
+      yMargin: LIGHT_SOURCE_PANEL_SETTINGS.SOURCE_COMBO_BOX_Y_MARGIN,
     });
 
     const wavelengthControl = new InterferometryLabNumberControl(
@@ -76,9 +77,9 @@ export class LightSourcePanel extends TitledPanel {
         valuePattern: units.nanometersStringProperty,
         decimals: 0,
         delta: 1,
-        keyboardStep: 5,
+        keyboardStep: LIGHT_SOURCE_PANEL_SETTINGS.WAVELENGTH_CONTROL_KEYBOARD_STEP,
         shiftKeyboardStep: 1,
-        pageKeyboardStep: 25,
+        pageKeyboardStep: LIGHT_SOURCE_PANEL_SETTINGS.WAVELENGTH_CONTROL_PAGE_KEYBOARD_STEP,
         visibleProperty: model.isFilteredProperty,
       },
     );
@@ -91,10 +92,10 @@ export class LightSourcePanel extends TitledPanel {
         accessibleName: options.accessibleNames.bandwidth,
         valuePattern: units.nanometersStringProperty,
         decimals: 1,
-        delta: 0.5,
+        delta: LIGHT_SOURCE_PANEL_SETTINGS.BANDWIDTH_CONTROL_DELTA,
         keyboardStep: 1,
-        shiftKeyboardStep: 0.5,
-        pageKeyboardStep: 10,
+        shiftKeyboardStep: LIGHT_SOURCE_PANEL_SETTINGS.BANDWIDTH_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: LIGHT_SOURCE_PANEL_SETTINGS.BANDWIDTH_CONTROL_PAGE_KEYBOARD_STEP,
         visibleProperty: model.isFilteredProperty,
       },
     );

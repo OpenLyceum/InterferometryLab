@@ -1,3 +1,4 @@
+import { MICHELSON_TABLE_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MichelsonTableNode.ts
  *
@@ -33,26 +34,35 @@ import type { InterferometryLabPreferencesModel } from "../../preferences/Interf
 import type { MichelsonModel } from "../model/MichelsonModel.js";
 
 /** Table size, view pixels. */
-const TABLE_WIDTH = 440;
-const TABLE_HEIGHT = 252;
+const TABLE_WIDTH: number = MICHELSON_TABLE_NODE_SETTINGS.TABLE_WIDTH;
+const TABLE_HEIGHT: number = MICHELSON_TABLE_NODE_SETTINGS.TABLE_HEIGHT;
 
 /** Component positions in table-local coordinates, view pixels. */
-const SOURCE = new Vector2(48, 140);
-const SPLITTER = new Vector2(158, 140);
-const FIXED_MIRROR = new Vector2(360, 140);
-const MOVABLE_MIRROR = new Vector2(158, 44);
-const DETECTOR = new Vector2(158, 228);
-const COMPENSATOR = new Vector2(252, 140);
-const GAS_CELL = new Vector2(158, 94);
+const SOURCE = new Vector2(MICHELSON_TABLE_NODE_SETTINGS.SOURCE_X, MICHELSON_TABLE_NODE_SETTINGS.SOURCE_Y);
+const SPLITTER = new Vector2(MICHELSON_TABLE_NODE_SETTINGS.SPLITTER_X, MICHELSON_TABLE_NODE_SETTINGS.SPLITTER_Y);
+const FIXED_MIRROR = new Vector2(
+  MICHELSON_TABLE_NODE_SETTINGS.FIXED_MIRROR_X,
+  MICHELSON_TABLE_NODE_SETTINGS.FIXED_MIRROR_Y,
+);
+const MOVABLE_MIRROR = new Vector2(
+  MICHELSON_TABLE_NODE_SETTINGS.MOVABLE_MIRROR_X,
+  MICHELSON_TABLE_NODE_SETTINGS.MOVABLE_MIRROR_Y,
+);
+const DETECTOR = new Vector2(MICHELSON_TABLE_NODE_SETTINGS.DETECTOR_X, MICHELSON_TABLE_NODE_SETTINGS.DETECTOR_Y);
+const COMPENSATOR = new Vector2(
+  MICHELSON_TABLE_NODE_SETTINGS.COMPENSATOR_X,
+  MICHELSON_TABLE_NODE_SETTINGS.COMPENSATOR_Y,
+);
+const GAS_CELL = new Vector2(MICHELSON_TABLE_NODE_SETTINGS.GAS_CELL_X, MICHELSON_TABLE_NODE_SETTINGS.GAS_CELL_Y);
 
 /** Width of the mirrors and plates, view pixels. */
-const OPTIC_WIDTH = 46;
+const OPTIC_WIDTH: number = MICHELSON_TABLE_NODE_SETTINGS.OPTIC_WIDTH;
 
 /**
  * How far the movable mirror slides on screen at the end of its travel, view
  * pixels. Purely illustrative — see the class comment.
  */
-const MIRROR_TRAVEL_PIXELS = 14;
+const MIRROR_TRAVEL_PIXELS: number = MICHELSON_TABLE_NODE_SETTINGS.MIRROR_TRAVEL_PIXELS;
 
 export class MichelsonTableNode extends Node {
   public constructor(model: MichelsonModel, preferences: InterferometryLabPreferencesModel) {
@@ -77,7 +87,7 @@ export class MichelsonTableNode extends Node {
     });
 
     // ── Components ───────────────────────────────────────────────────────────
-    const source = createSourceNode(52, 24, beamColor);
+    const source = createSourceNode(52, MICHELSON_TABLE_NODE_SETTINGS.SOURCE_HEIGHT, beamColor);
     source.translation = SOURCE;
 
     const splitter = createBeamSplitterNode(OPTIC_WIDTH + 10);
@@ -100,7 +110,7 @@ export class MichelsonTableNode extends Node {
       [model.gasCellPressureProperty],
       (pressureKPa) => pressureKPa / model.gasCellPressureProperty.range.max,
     );
-    const gasCell = createGasCellNode(34, 30, gasFillProperty);
+    const gasCell = createGasCellNode(34, MICHELSON_TABLE_NODE_SETTINGS.GAS_CELL_HEIGHT, gasFillProperty);
     gasCell.rotation = Math.PI / 2;
     gasCell.translation = GAS_CELL;
     gasCell.visibleProperty = model.gasCellEnabledProperty;
@@ -117,15 +127,15 @@ export class MichelsonTableNode extends Node {
 
     // ── Labels ───────────────────────────────────────────────────────────────
     const sourceLabel = createTableLabel(common.sourceStringProperty);
-    sourceLabel.centerX = SOURCE.x - 12;
-    sourceLabel.bottom = SOURCE.y - 18;
+    sourceLabel.centerX = SOURCE.x - MICHELSON_TABLE_NODE_SETTINGS.CONSTRUCTOR_CENTER_X_OFFSET;
+    sourceLabel.bottom = SOURCE.y - MICHELSON_TABLE_NODE_SETTINGS.CONSTRUCTOR_BOTTOM_OFFSET;
 
     const splitterLabel = createTableLabel(common.beamSplitterStringProperty);
     splitterLabel.centerX = SPLITTER.x + 4;
-    splitterLabel.top = SPLITTER.y + 26;
+    splitterLabel.top = SPLITTER.y + MICHELSON_TABLE_NODE_SETTINGS.CONSTRUCTOR_TOP_OFFSET;
 
     const movableLabel = createTableLabel("M₁");
-    movableLabel.right = MOVABLE_MIRROR.x - 32;
+    movableLabel.right = MOVABLE_MIRROR.x - MICHELSON_TABLE_NODE_SETTINGS.CONSTRUCTOR_RIGHT_OFFSET;
     movableLabel.centerY = MOVABLE_MIRROR.y;
 
     const fixedLabel = createTableLabel("M₂");
@@ -140,10 +150,10 @@ export class MichelsonTableNode extends Node {
     compensatorLabel.centerX = COMPENSATOR.x + 10;
     compensatorLabel.bottom = COMPENSATOR.y - 28;
     compensatorLabel.visibleProperty = model.compensatorPlateProperty;
-    compensatorLabel.maxWidth = 120;
+    compensatorLabel.maxWidth = MICHELSON_TABLE_NODE_SETTINGS.MAX_WIDTH_MAX_WIDTH;
 
     const gasCellLabel = createTableLabel(michelson.gasCellStringProperty);
-    gasCellLabel.left = GAS_CELL.x + 24;
+    gasCellLabel.left = GAS_CELL.x + MICHELSON_TABLE_NODE_SETTINGS.CONSTRUCTOR_LEFT_OFFSET;
     gasCellLabel.centerY = GAS_CELL.y;
     gasCellLabel.visibleProperty = model.gasCellEnabledProperty;
 
@@ -161,7 +171,9 @@ export class MichelsonTableNode extends Node {
 
     // Left of the cell rather than under it: below is where the compensator's
     // own label runs, and the two would collide.
-    const cellPathLabel = createTableLabel(pathDeltaProperty(model.gasCellOpdProperty, 2));
+    const cellPathLabel = createTableLabel(
+      pathDeltaProperty(model.gasCellOpdProperty, MICHELSON_TABLE_NODE_SETTINGS.CELL_PATH_LABEL_DECIMALS),
+    );
     cellPathLabel.right = GAS_CELL.x - 24;
     cellPathLabel.centerY = GAS_CELL.y;
     cellPathLabel.visibleProperty = new DerivedProperty(

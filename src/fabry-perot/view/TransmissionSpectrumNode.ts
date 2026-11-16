@@ -1,3 +1,4 @@
+import { TRANSMISSION_SPECTRUM_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * TransmissionSpectrumNode.ts
  *
@@ -23,10 +24,10 @@ import { StringManager } from "../../i18n/StringManager.js";
 import type { FabryPerotModel } from "../model/FabryPerotModel.js";
 
 /** Number of points the transmission curve is sampled at. */
-const SAMPLE_COUNT = 700;
+const SAMPLE_COUNT: number = TRANSMISSION_SPECTRUM_NODE_SETTINGS.SAMPLE_COUNT;
 
 /** How many free spectral ranges the plot spans with a single source line. */
-const SPAN_IN_FSR = 2.2;
+const SPAN_IN_FSR: number = TRANSMISSION_SPECTRUM_NODE_SETTINGS.SPAN_IN_FSR;
 
 /**
  * With two lines the plot zooms in to this multiple of their separation, so the
@@ -34,7 +35,7 @@ const SPAN_IN_FSR = 2.2;
  * actually visible. Across a whole free spectral range a picometre-scale pair is
  * a single hairline.
  */
-const TWIN_LINE_SPAN_FACTOR = 8;
+const TWIN_LINE_SPAN_FACTOR: number = TRANSMISSION_SPECTRUM_NODE_SETTINGS.TWIN_LINE_SPAN_FACTOR;
 
 export type TransmissionSpectrumNodeOptions = {
   readonly width: number;
@@ -53,7 +54,7 @@ export class TransmissionSpectrumNode extends VBox {
       viewWidth: options.width,
       viewHeight: options.height,
       modelXRange: new Range(-1, 1),
-      modelYRange: new Range(0, 1.05),
+      modelYRange: new Range(0, TRANSMISSION_SPECTRUM_NODE_SETTINGS.CHART_TRANSFORM_RANGE_MAX),
     });
 
     const chartRectangle = new ChartRectangle(chartTransform, {
@@ -65,7 +66,7 @@ export class TransmissionSpectrumNode extends VBox {
 
     const curve = new LinePlot(chartTransform, [], {
       stroke: InterferometryLabColors.plotTraceColorProperty,
-      lineWidth: 1.6,
+      lineWidth: TRANSMISSION_SPECTRUM_NODE_SETTINGS.CURVE_LINE_WIDTH,
     });
 
     // Vertical markers for the source's lines, drawn full height so it is
@@ -114,8 +115,11 @@ export class TransmissionSpectrumNode extends VBox {
         const viewX = chartTransform.modelToViewX(x);
         return new Line(viewX, 0, viewX, options.height, {
           stroke: InterferometryLabColors.valueColorProperty,
-          lineWidth: 1.2,
-          lineDash: [4, 3],
+          lineWidth: TRANSMISSION_SPECTRUM_NODE_SETTINGS.CHILDREN_LINE_WIDTH,
+          lineDash: [
+            TRANSMISSION_SPECTRUM_NODE_SETTINGS.UPDATE_LINE_DASH_DASH,
+            TRANSMISSION_SPECTRUM_NODE_SETTINGS.CONSTRUCTOR_UPDATE_LINE_DASH_DASH,
+          ],
         });
       });
     };
@@ -148,7 +152,11 @@ export class TransmissionSpectrumNode extends VBox {
       visibleProperty: model.twinLineProperty,
     });
 
-    super({ spacing: 5, align: "center", children: [title, chart, axisLabel, resolutionLabel] });
+    super({
+      spacing: TRANSMISSION_SPECTRUM_NODE_SETTINGS.CONSTRUCTOR_SPACING,
+      align: "center",
+      children: [title, chart, axisLabel, resolutionLabel],
+    });
     this.multilink = multilink;
     this.resolutionProperty = resolutionProperty;
   }

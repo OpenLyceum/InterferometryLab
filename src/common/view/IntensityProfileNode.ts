@@ -1,3 +1,4 @@
+import { INTENSITY_PROFILE_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * IntensityProfileNode.ts
  *
@@ -41,14 +42,14 @@ import { intensityProfile } from "../model/fringeIntensity.js";
  * grid so the trace and the image agree about how much detail there is; sampling
  * finer would draw fringes the detector above it cannot resolve.
  */
-const SAMPLE_COUNT = 240;
+const SAMPLE_COUNT: number = INTENSITY_PROFILE_NODE_SETTINGS.SAMPLE_COUNT;
 
 /**
  * Below this modulation the trace is called flat rather than fringed. A pattern
  * this shallow is a single fringe filling the field, which is a real and
  * commonly reached state — see `opdSpread` in the model.
  */
-const FLAT_CONTRAST = 0.02;
+const FLAT_CONTRAST: number = INTENSITY_PROFILE_NODE_SETTINGS.FLAT_CONTRAST;
 
 /**
  * Bounds of the intensity axis.
@@ -58,11 +59,11 @@ const FLAT_CONTRAST = 0.02;
  * zero, a constant total sitting at one. Drawn hard against the frame those read
  * as an empty box rather than as a result.
  */
-const INTENSITY_MIN = -0.06;
-const INTENSITY_MAX = 1.08;
+const INTENSITY_MIN: number = INTENSITY_PROFILE_NODE_SETTINGS.INTENSITY_MIN;
+const INTENSITY_MAX: number = INTENSITY_PROFILE_NODE_SETTINGS.INTENSITY_MAX;
 
 /** Spacing of the horizontal gridlines, in intensity. */
-const INTENSITY_GRID_SPACING = 0.5;
+const INTENSITY_GRID_SPACING: number = INTENSITY_PROFILE_NODE_SETTINGS.INTENSITY_GRID_SPACING;
 
 /**
  * Stands in for a screen-specific description suffix when a screen has none, so
@@ -149,7 +150,7 @@ export class IntensityProfileNode extends VBox {
       specProperty: trace.specProperty,
       plot: new LinePlot(chartTransform, [], {
         stroke: trace.colorProperty,
-        lineWidth: 1.6,
+        lineWidth: INTENSITY_PROFILE_NODE_SETTINGS.SERIES_LINE_WIDTH,
       }),
       buffer: new Float64Array(SAMPLE_COUNT),
     }));
@@ -158,8 +159,11 @@ export class IntensityProfileNode extends VBox {
     const sumPlot = options.showSum
       ? new LinePlot(chartTransform, [], {
           stroke: InterferometryLabColors.plotSumColorProperty,
-          lineWidth: 1.4,
-          lineDash: [5, 4],
+          lineWidth: INTENSITY_PROFILE_NODE_SETTINGS.SUM_PLOT_LINE_WIDTH,
+          lineDash: [
+            INTENSITY_PROFILE_NODE_SETTINGS.SUM_PLOT_LINE_DASH_DASH,
+            INTENSITY_PROFILE_NODE_SETTINGS.CONSTRUCTOR_SUM_PLOT_LINE_DASH_DASH,
+          ],
         })
       : null;
 
@@ -169,7 +173,7 @@ export class IntensityProfileNode extends VBox {
     // to tell a trace pinned at zero from a trace that is simply near the bottom.
     const gridLines = new GridLineSet(chartTransform, Orientation.VERTICAL, INTENSITY_GRID_SPACING, {
       stroke: InterferometryLabColors.plotAxisColorProperty,
-      lineWidth: 0.5,
+      lineWidth: INTENSITY_PROFILE_NODE_SETTINGS.GRID_LINES_LINE_WIDTH,
     });
 
     const clipped = new Node({
@@ -220,14 +224,16 @@ export class IntensityProfileNode extends VBox {
     // both one line of small print about the same chart, and the vertical space
     // a second row costs is space the control panels below need.
     const legend = createLegend(traces, options);
-    const footer = legend ? new HBox({ spacing: 16, children: [axisLabel, legend] }) : axisLabel;
+    const footer = legend
+      ? new HBox({ spacing: INTENSITY_PROFILE_NODE_SETTINGS.FOOTER_SPACING, children: [axisLabel, legend] })
+      : axisLabel;
 
     const children: Node[] = [title, chart, footer];
 
     const description = describeProfile(traces[0].specProperty, options.descriptionSuffix);
 
     super({
-      spacing: 5,
+      spacing: INTENSITY_PROFILE_NODE_SETTINGS.CONSTRUCTOR_SPACING,
       align: "center",
       children,
       accessibleParagraph: description,
@@ -264,13 +270,16 @@ function createLegend(traces: readonly IntensityTrace[], options: IntensityProfi
   }
 
   return new HBox({
-    spacing: 12,
+    spacing: INTENSITY_PROFILE_NODE_SETTINGS.CREATE_LEGEND_SPACING,
     children: entries.map(
       (entry) =>
         new HBox({
-          spacing: 4,
+          spacing: INTENSITY_PROFILE_NODE_SETTINGS.CREATE_LEGEND_SPACING_VARIANT_2,
           children: [
-            new Line(0, 0, 14, 0, { stroke: entry.color, lineWidth: 2.5 }),
+            new Line(0, 0, INTENSITY_PROFILE_NODE_SETTINGS.CREATE_LEGEND_END_X, 0, {
+              stroke: entry.color,
+              lineWidth: INTENSITY_PROFILE_NODE_SETTINGS.CREATE_LEGEND_LINE_WIDTH,
+            }),
             new Text(entry.label, {
               font: new PhetFont(LABEL_FONT_SIZE - 1),
               fill: InterferometryLabColors.textColorProperty,

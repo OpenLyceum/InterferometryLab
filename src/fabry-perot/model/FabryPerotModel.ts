@@ -1,3 +1,4 @@
+import { FABRY_PEROT_MODEL_SETTINGS, FABRYPEROTMODEL_TIME_STEP } from "../../InterferometryLabConstants.js";
 /**
  * FabryPerotModel.ts
  *
@@ -55,16 +56,16 @@ const CAVITY_INDEX = 1;
  * response, not the source, sets what the rings look like — which is the regime
  * an etalon is used in.
  */
-const SOURCE_LINEWIDTH_NM = 0.0005;
+const SOURCE_LINEWIDTH_NM: number = FABRY_PEROT_MODEL_SETTINGS.SOURCE_LINEWIDTH_NM;
 
 /** How far the scan sweeps the spacing, in wavelengths. */
-const SCAN_AMPLITUDE_WAVES = 1.5;
+const SCAN_AMPLITUDE_WAVES: number = FABRY_PEROT_MODEL_SETTINGS.SCAN_AMPLITUDE_WAVES;
 
 /** Scan period, seconds. */
-const SCAN_PERIOD_S = 6;
+const SCAN_PERIOD_S: number = FABRY_PEROT_MODEL_SETTINGS.SCAN_PERIOD_S;
 
 /** One frame's worth of sweep, seconds — what the step-forward button advances. */
-const MANUAL_STEP_DT = 1 / 60;
+const MANUAL_STEP_DT: number = FABRYPEROTMODEL_TIME_STEP.SECONDS;
 
 /**
  * Starting spacing, nm: exactly 340 half-waves of the default 589 nm line.
@@ -74,7 +75,8 @@ const MANUAL_STEP_DT = 1 / 60;
  * source line falls in the gap between transmission peaks, which is a correct
  * but thoroughly discouraging first impression.
  */
-const INITIAL_SPACING_NM = (340 * 589) / 2;
+const INITIAL_SPACING_NM =
+  (FABRY_PEROT_MODEL_SETTINGS.INITIAL_RESONANCE_ORDER * FABRY_PEROT_MODEL_SETTINGS.INITIAL_REFERENCE_WAVELENGTH) / 2;
 
 /** Display gain: the Airy peak is already normalized to 1. */
 const EXPOSURE = 1;
@@ -147,11 +149,18 @@ export class FabryPerotModel implements TModel {
   public readonly fringeSpecProperty: TReadOnlyProperty<FringeSpec>;
 
   public constructor() {
-    this.wavelengthProperty = new NumberProperty(589, { range: WAVELENGTH_RANGE_NM, units: "nm" });
+    this.wavelengthProperty = new NumberProperty(FABRY_PEROT_MODEL_SETTINGS.WAVELENGTH_DEFAULT, {
+      range: WAVELENGTH_RANGE_NM,
+      units: "nm",
+    });
     this.twinLineProperty = new BooleanProperty(false);
-    this.lineSeparationProperty = new NumberProperty(60, { range: LINE_SEPARATION_RANGE_PM });
+    this.lineSeparationProperty = new NumberProperty(FABRY_PEROT_MODEL_SETTINGS.LINE_SEPARATION_DEFAULT, {
+      range: LINE_SEPARATION_RANGE_PM,
+    });
 
-    this.reflectanceProperty = new NumberProperty(0.85, { range: REFLECTANCE_RANGE });
+    this.reflectanceProperty = new NumberProperty(FABRY_PEROT_MODEL_SETTINGS.REFLECTANCE_DEFAULT, {
+      range: REFLECTANCE_RANGE,
+    });
     this.absorptanceProperty = new NumberProperty(0, { range: ABSORPTANCE_RANGE });
     this.spacingProperty = new NumberProperty(INITIAL_SPACING_NM, {
       range: CAVITY_SPACING_RANGE_UM.times(NM_PER_UM),

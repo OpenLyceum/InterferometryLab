@@ -1,3 +1,4 @@
+import { BEAM_PATH_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * BeamPathNode.ts
  *
@@ -17,13 +18,13 @@ import { Shape } from "scenerystack/kite";
 import { type Color, Node, Path } from "scenerystack/scenery";
 
 /** Stroke width of the bright core of a beam, view pixels. */
-const CORE_WIDTH = 2;
+const CORE_WIDTH: number = BEAM_PATH_NODE_SETTINGS.CORE_WIDTH;
 
 /** Stroke width of the halo around a beam, view pixels. */
-const HALO_WIDTH = 8;
+const HALO_WIDTH: number = BEAM_PATH_NODE_SETTINGS.HALO_WIDTH;
 
 /** Opacity of the halo at full beam intensity. */
-const HALO_OPACITY = 0.22;
+const HALO_OPACITY: number = BEAM_PATH_NODE_SETTINGS.HALO_OPACITY;
 
 export type BeamPathNodeOptions = {
   /** Relative brightness of this beam, 0–1. Defaults to a constant 1. */

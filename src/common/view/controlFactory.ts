@@ -1,3 +1,4 @@
+import { CONTROL_FACTORY_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * controlFactory.ts
  *
@@ -40,7 +41,7 @@ export function createCheckbox(
     new Text(label, {
       font: new PhetFont(LABEL_FONT_SIZE),
       fill: InterferometryLabColors.textColorProperty,
-      maxWidth: 165,
+      maxWidth: CONTROL_FACTORY_SETTINGS.CREATE_CHECKBOX_MAX_WIDTH,
     }),
     {
       accessibleName,
@@ -48,8 +49,8 @@ export function createCheckbox(
       // is for labels on white chrome.
       checkboxColor: InterferometryLabColors.textColorProperty,
       checkboxColorBackground: InterferometryLabColors.panelBackgroundColorProperty,
-      spacing: 7,
-      boxWidth: 15,
+      spacing: CONTROL_FACTORY_SETTINGS.CREATE_CHECKBOX_SPACING,
+      boxWidth: CONTROL_FACTORY_SETTINGS.CREATE_CHECKBOX_BOX_WIDTH,
     },
   );
 }
@@ -71,13 +72,13 @@ export function createPushButton(
     content: new Text(label, {
       font: new PhetFont(LABEL_FONT_SIZE),
       fill: LIGHT_SURFACE_TEXT_FILL,
-      maxWidth: 150,
+      maxWidth: CONTROL_FACTORY_SETTINGS.CREATE_PUSH_BUTTON_MAX_WIDTH,
     }),
     baseColor: InterferometryLabColors.controlSurfaceColorProperty,
     listener,
     accessibleName,
-    xMargin: 10,
-    yMargin: 5,
+    xMargin: CONTROL_FACTORY_SETTINGS.CREATE_PUSH_BUTTON_X_MARGIN,
+    yMargin: CONTROL_FACTORY_SETTINGS.CREATE_PUSH_BUTTON_Y_MARGIN,
   });
 }
 
@@ -138,9 +139,9 @@ export function createTiltControl(
     valuePattern: StringManager.getInstance().getUnits().microradiansStringProperty,
     decimals: 0,
     delta: 1,
-    keyboardStep: 5,
+    keyboardStep: CONTROL_FACTORY_SETTINGS.CREATE_TILT_CONTROL_KEYBOARD_STEP,
     shiftKeyboardStep: 1,
-    pageKeyboardStep: 50,
+    pageKeyboardStep: CONTROL_FACTORY_SETTINGS.CREATE_TILT_CONTROL_PAGE_KEYBOARD_STEP,
     majorTicks: [{ value: 0, label: "0" }],
   });
 }

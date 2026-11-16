@@ -1,3 +1,4 @@
+import { MACH_ZEHNDER_MODE_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MachZehnderModePanel.ts
  *
@@ -36,7 +37,7 @@ export class MachZehnderModePanel extends TitledPanel {
       new Text(text, {
         font: new PhetFont(LABEL_FONT_SIZE),
         fill: InterferometryLabColors.textColorProperty,
-        maxWidth: 160,
+        maxWidth: MACH_ZEHNDER_MODE_PANEL_SETTINGS.MODE_LABEL_MAX_WIDTH,
       });
 
     const modeRadioGroup = new AquaRadioButtonGroup(
@@ -55,12 +56,12 @@ export class MachZehnderModePanel extends TitledPanel {
       ],
       {
         accessibleName: a11y.modeStringProperty,
-        spacing: 5,
+        spacing: MACH_ZEHNDER_MODE_PANEL_SETTINGS.MODE_RADIO_GROUP_SPACING,
         radioButtonOptions: {
           selectedColor: InterferometryLabColors.accentColorProperty,
           deselectedColor: InterferometryLabColors.controlSurfaceColorProperty,
           stroke: InterferometryLabColors.panelBorderColorProperty,
-          radius: 7,
+          radius: MACH_ZEHNDER_MODE_PANEL_SETTINGS.MODE_RADIO_GROUP_RADIUS,
         },
       },
     );
@@ -78,10 +79,10 @@ export class MachZehnderModePanel extends TitledPanel {
         accessibleName: a11y.photonRateStringProperty,
         valuePattern: strings.getUnits().perSecondStringProperty,
         decimals: 0,
-        delta: 5,
-        keyboardStep: 10,
-        shiftKeyboardStep: 5,
-        pageKeyboardStep: 50,
+        delta: MACH_ZEHNDER_MODE_PANEL_SETTINGS.RATE_CONTROL_DELTA,
+        keyboardStep: MACH_ZEHNDER_MODE_PANEL_SETTINGS.RATE_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: MACH_ZEHNDER_MODE_PANEL_SETTINGS.RATE_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MACH_ZEHNDER_MODE_PANEL_SETTINGS.RATE_CONTROL_PAGE_KEYBOARD_STEP,
         visibleProperty: isSinglePhotonProperty,
       },
     );
@@ -106,7 +107,7 @@ export class MachZehnderModePanel extends TitledPanel {
 
     const photonBox = new VBox({
       align: "left",
-      spacing: 6,
+      spacing: MACH_ZEHNDER_MODE_PANEL_SETTINGS.PHOTON_BOX_SPACING,
       children: [counts, clearButton],
       visibleProperty: isSinglePhotonProperty,
     });

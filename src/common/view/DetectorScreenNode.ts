@@ -1,3 +1,4 @@
+import { DETECTOR_SCREEN_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * DetectorScreenNode.ts
  *
@@ -19,7 +20,7 @@ import type { FringeSpec } from "../model/FringeSpec.js";
 import { FringePatternNode } from "./FringePatternNode.js";
 
 /** Width of the bezel drawn around the pattern, view pixels. */
-const BEZEL_WIDTH = 4;
+const BEZEL_WIDTH: number = DETECTOR_SCREEN_NODE_SETTINGS.BEZEL_WIDTH;
 
 export type DetectorScreenNodeOptions = {
   /** Side length of the pattern itself, view pixels. */
@@ -72,7 +73,7 @@ export class DetectorScreenNode extends VBox {
     }
     children.push(framed);
 
-    super({ spacing: 6, align: "center", children });
+    super({ spacing: DETECTOR_SCREEN_NODE_SETTINGS.CONSTRUCTOR_SPACING, align: "center", children });
 
     this.patternNode = patternNode;
     this.overlayLayer = overlayLayer;

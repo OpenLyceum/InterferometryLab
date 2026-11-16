@@ -1,3 +1,4 @@
+import { INTERFEROMETRY_LAB_PANEL_SETTINGS } from "../InterferometryLabConstants.js";
 /**
  * InterferometryLabPanel.ts
  *
@@ -40,8 +41,8 @@ export class InterferometryLabPanel extends Panel {
         fill: InterferometryLabColors.panelBackgroundColorProperty,
         stroke: InterferometryLabColors.panelBorderColorProperty,
         cornerRadius: PANEL_CORNER_RADIUS,
-        xMargin: 12,
-        yMargin: 10,
+        xMargin: INTERFEROMETRY_LAB_PANEL_SETTINGS.OPTIONS_X_MARGIN,
+        yMargin: INTERFEROMETRY_LAB_PANEL_SETTINGS.OPTIONS_Y_MARGIN,
       },
       providedOptions,
     );

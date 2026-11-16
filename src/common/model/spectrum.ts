@@ -1,3 +1,4 @@
+import { SPECTRUM_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * spectrum.ts
  *
@@ -36,7 +37,7 @@ import InterferometryLabNamespace from "../../InterferometryLabNamespace.js";
 const FWHM_TO_SIGMA = 2 * Math.sqrt(2 * Math.LN2);
 
 /** Half-width, in standard deviations, of the sampled span of a narrow line. */
-const SAMPLE_HALF_SPAN_SIGMA = 2.2;
+const SAMPLE_HALF_SPAN_SIGMA: number = SPECTRUM_SETTINGS.SAMPLE_HALF_SPAN_SIGMA;
 
 /**
  * A Gaussian slice of a source's spectrum. The renderer evaluates one
@@ -84,7 +85,7 @@ export function lineVisibility(opdNm: number, centerNm: number, fwhmNm: number):
   const sigmaK = spectralSigmaK(centerNm, fwhmNm);
   const exponent = -0.5 * sigmaK * sigmaK * opdNm * opdNm;
   // exp() underflows to 0 well before this matters; the guard just avoids the call.
-  return exponent < -50 ? 0 : Math.exp(exponent);
+  return exponent < SPECTRUM_SETTINGS.MIN_COHERENCE_EXPONENT ? 0 : Math.exp(exponent);
 }
 
 /**

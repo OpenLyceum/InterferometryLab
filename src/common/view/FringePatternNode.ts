@@ -1,3 +1,4 @@
+import { FRINGE_PATTERN_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * FringePatternNode.ts
  *
@@ -37,7 +38,7 @@ import { lineVisibility } from "../model/spectrum.js";
 import { encodeSrgb, wavelengthToLinearRgb } from "./spectralColor.js";
 
 /** Above this many spectral groups the sample grid drops to the coarse size. */
-const BROADBAND_GROUP_THRESHOLD = 3;
+const BROADBAND_GROUP_THRESHOLD: number = FRINGE_PATTERN_NODE_SETTINGS.BROADBAND_GROUP_THRESHOLD;
 
 /** Cache of wavelength (rounded to nm) to linear sRGB, shared by all detectors. */
 const colorCache = new Map<number, readonly [number, number, number]>();

@@ -1,3 +1,4 @@
+import { MICHELSON_SCREEN_VIEW_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MichelsonScreenView.ts
  *
@@ -43,8 +44,8 @@ export type MichelsonScreenViewOptions = ScreenViewOptions;
 const PANEL_CONTENT_WIDTH = CONTROL_PANEL_WIDTH - 24;
 
 /** The analysis column to the right of the detector, view pixels. */
-const PLOT_WIDTH = 264;
-const PLOT_HEIGHT = 104;
+const PLOT_WIDTH: number = MICHELSON_SCREEN_VIEW_SETTINGS.PLOT_WIDTH;
+const PLOT_HEIGHT: number = MICHELSON_SCREEN_VIEW_SETTINGS.PLOT_HEIGHT;
 
 export class MichelsonScreenView extends ScreenView {
   public constructor(

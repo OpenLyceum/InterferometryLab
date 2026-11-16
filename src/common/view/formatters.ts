@@ -1,3 +1,4 @@
+import { FORMATTERS_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * formatters.ts
  *
@@ -17,7 +18,7 @@ import { NM_PER_MM, NM_PER_UM } from "../../InterferometryLabConstants.js";
 import { StringManager } from "../../i18n/StringManager.js";
 
 /** Above this many nanometres a length is shown in micrometres. */
-const MICROMETER_THRESHOLD_NM = 2000;
+const MICROMETER_THRESHOLD_NM: number = FORMATTERS_SETTINGS.MICROMETER_THRESHOLD_NM;
 
 /** Above this many nanometres a length is shown in millimetres. */
 const MILLIMETER_THRESHOLD_NM = 2 * NM_PER_MM;

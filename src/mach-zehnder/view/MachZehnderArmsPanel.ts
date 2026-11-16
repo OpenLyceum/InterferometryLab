@@ -1,3 +1,4 @@
+import { MACH_ZEHNDER_ARMS_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MachZehnderArmsPanel.ts
  *
@@ -34,9 +35,9 @@ export class MachZehnderArmsPanel extends TitledPanel {
         valuePattern: units.nanometersStringProperty,
         decimals: 0,
         delta: 1,
-        keyboardStep: 25,
-        shiftKeyboardStep: 5,
-        pageKeyboardStep: 250,
+        keyboardStep: MACH_ZEHNDER_ARMS_PANEL_SETTINGS.IMBALANCE_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: MACH_ZEHNDER_ARMS_PANEL_SETTINGS.IMBALANCE_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MACH_ZEHNDER_ARMS_PANEL_SETTINGS.IMBALANCE_CONTROL_PAGE_KEYBOARD_STEP,
         majorTicks: [{ value: 0, label: "0" }],
       },
     );

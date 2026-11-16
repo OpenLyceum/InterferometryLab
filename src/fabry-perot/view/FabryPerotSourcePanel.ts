@@ -1,3 +1,4 @@
+import { FABRY_PEROT_SOURCE_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * FabryPerotSourcePanel.ts
  *
@@ -33,9 +34,9 @@ export class FabryPerotSourcePanel extends TitledPanel {
         valuePattern: units.nanometersStringProperty,
         decimals: 0,
         delta: 1,
-        keyboardStep: 5,
+        keyboardStep: FABRY_PEROT_SOURCE_PANEL_SETTINGS.WAVELENGTH_CONTROL_KEYBOARD_STEP,
         shiftKeyboardStep: 1,
-        pageKeyboardStep: 25,
+        pageKeyboardStep: FABRY_PEROT_SOURCE_PANEL_SETTINGS.WAVELENGTH_CONTROL_PAGE_KEYBOARD_STEP,
       },
     );
 
@@ -53,10 +54,10 @@ export class FabryPerotSourcePanel extends TitledPanel {
         accessibleName: a11y.lineSeparationStringProperty,
         valuePattern: units.picometersStringProperty,
         decimals: 1,
-        delta: 0.5,
+        delta: FABRY_PEROT_SOURCE_PANEL_SETTINGS.SEPARATION_CONTROL_DELTA,
         keyboardStep: 1,
-        shiftKeyboardStep: 0.5,
-        pageKeyboardStep: 10,
+        shiftKeyboardStep: FABRY_PEROT_SOURCE_PANEL_SETTINGS.SEPARATION_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: FABRY_PEROT_SOURCE_PANEL_SETTINGS.SEPARATION_CONTROL_PAGE_KEYBOARD_STEP,
         enabledProperty: model.twinLineProperty,
       },
     );

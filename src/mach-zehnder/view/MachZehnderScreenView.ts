@@ -1,3 +1,4 @@
+import { MACH_ZEHNDER_SCREEN_VIEW_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MachZehnderScreenView.ts
  *
@@ -44,11 +45,11 @@ const PANEL_CONTENT_WIDTH = CONTROL_PANEL_WIDTH - 24;
 /** Side length of each of the two port detectors, view pixels. Smaller than the
  *  single detector on the other screens, because there are two of them and they
  *  share the column with the trace drawn underneath. */
-const PORT_DETECTOR_SIZE = 132;
+const PORT_DETECTOR_SIZE: number = MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.PORT_DETECTOR_SIZE;
 
 /** The intensity trace under the two ports, view pixels. Spans both of them. */
 const PROFILE_WIDTH = 2 * PORT_DETECTOR_SIZE + PANEL_SPACING;
-const PROFILE_HEIGHT = 68;
+const PROFILE_HEIGHT: number = MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.PROFILE_HEIGHT;
 
 export class MachZehnderScreenView extends ScreenView {
   public constructor(
@@ -101,7 +102,11 @@ export class MachZehnderScreenView extends ScreenView {
         { label: common.intensityStringProperty, value: percentProperty(fractionProperty, 0) },
       ]);
 
-      return new VBox({ spacing: 6, align: "center", children: [detector, readout] });
+      return new VBox({
+        spacing: MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.CREATE_PORT_SPACING,
+        align: "center",
+        children: [detector, readout],
+      });
     };
 
     const portA = createPort(
@@ -121,7 +126,11 @@ export class MachZehnderScreenView extends ScreenView {
       { label: common.pathDifferenceStringProperty, value: lengthProperty(model.pathDifferenceProperty, 0) },
       {
         label: common.inWavelengthsStringProperty,
-        value: wavesProperty(model.pathDifferenceProperty, model.lightSource.meanWavelengthProperty, 2),
+        value: wavesProperty(
+          model.pathDifferenceProperty,
+          model.lightSource.meanWavelengthProperty,
+          MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.PATH_READOUT_DECIMALS,
+        ),
       },
       { label: common.visibilityStringProperty, value: percentProperty(model.visibilityProperty, 0) },
     ]);
@@ -168,20 +177,27 @@ export class MachZehnderScreenView extends ScreenView {
     // numbers — and stacking them all would push the control panels off the
     // bottom of the screen.
     const detectorColumn = new VBox({
-      spacing: 8,
+      spacing: MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.DETECTOR_COLUMN_SPACING,
       align: "left",
       children: [
         new HBox({ spacing: PANEL_SPACING, align: "top", children: [portA, portB] }),
         new HBox({
-          spacing: PANEL_SPACING + 10,
+          spacing: PANEL_SPACING + MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.DETECTOR_COLUMN_SPACING_OFFSET,
           align: "top",
-          children: [profileNode, new VBox({ spacing: 10, align: "left", children: [pathReadout, timeControl] })],
+          children: [
+            profileNode,
+            new VBox({
+              spacing: MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.DETECTOR_COLUMN_ITEM_2_SPACING,
+              align: "left",
+              children: [pathReadout, timeControl],
+            }),
+          ],
         }),
       ],
     });
 
     const topRow = new HBox({
-      spacing: PANEL_SPACING + 8,
+      spacing: PANEL_SPACING + MACH_ZEHNDER_SCREEN_VIEW_SETTINGS.TOP_ROW_SPACING_OFFSET,
       align: "top",
       children: [tableNode, detectorColumn],
     });

@@ -1,3 +1,4 @@
+import { READOUT_BLOCK_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * ReadoutBlock.ts
  *
@@ -28,8 +29,8 @@ export class ReadoutBlock extends GridBox {
   public constructor(rows: readonly ReadoutRow[]) {
     super({
       columns: [[], []],
-      xSpacing: 10,
-      ySpacing: 3,
+      xSpacing: READOUT_BLOCK_SETTINGS.CONSTRUCTOR_X_SPACING,
+      ySpacing: READOUT_BLOCK_SETTINGS.CONSTRUCTOR_Y_SPACING,
       xAlign: "left",
     });
 

@@ -1,3 +1,4 @@
+import { INTERFEROMETRY_LAB_NUMBER_CONTROL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * InterferometryLabNumberControl.ts
  *
@@ -21,10 +22,16 @@ import { LABEL_FONT_SIZE, READOUT_FONT_SIZE } from "../../InterferometryLabConst
 import { FLAT_RECTANGULAR_BUTTON_OPTIONS } from "../InterferometryLabButtonOptions.js";
 
 /** Track size shared by every slider in the sim, view pixels. */
-const TRACK_SIZE = new Dimension2(150, 3);
+const TRACK_SIZE = new Dimension2(
+  INTERFEROMETRY_LAB_NUMBER_CONTROL_SETTINGS.TRACK_SIZE_WIDTH,
+  INTERFEROMETRY_LAB_NUMBER_CONTROL_SETTINGS.TRACK_SIZE_HEIGHT,
+);
 
 /** Thumb size shared by every slider in the sim, view pixels. */
-const THUMB_SIZE = new Dimension2(13, 24);
+const THUMB_SIZE = new Dimension2(
+  INTERFEROMETRY_LAB_NUMBER_CONTROL_SETTINGS.THUMB_SIZE_WIDTH,
+  INTERFEROMETRY_LAB_NUMBER_CONTROL_SETTINGS.THUMB_SIZE_HEIGHT,
+);
 
 type SelfOptions = {
   /** Accessible name; required, since every control needs one. */
@@ -69,12 +76,14 @@ export class InterferometryLabNumberControl extends NumberControl {
 
     const options = optionize<InterferometryLabNumberControlOptions, EmptySelfOptions, NumberControlOptions>()(
       {
-        layoutFunction: NumberControl.createLayoutFunction4({ verticalSpacing: 2 }),
+        layoutFunction: NumberControl.createLayoutFunction4({
+          verticalSpacing: INTERFEROMETRY_LAB_NUMBER_CONTROL_SETTINGS.OPTIONS_VERTICAL_SPACING,
+        }),
         delta: providedOptions.delta ?? 0,
         titleNodeOptions: {
           font: new PhetFont(LABEL_FONT_SIZE),
           fill: InterferometryLabColors.textColorProperty,
-          maxWidth: 130,
+          maxWidth: INTERFEROMETRY_LAB_NUMBER_CONTROL_SETTINGS.OPTIONS_MAX_WIDTH,
         },
         numberDisplayOptions: {
           decimalPlaces: decimals,

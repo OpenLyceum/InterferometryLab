@@ -1,3 +1,4 @@
+import { MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MachZehnderSamplePanel.ts
  *
@@ -48,10 +49,10 @@ export class MachZehnderSamplePanel extends TitledPanel {
         accessibleName: a11y.thicknessStringProperty,
         valuePattern: units.micrometersStringProperty,
         decimals: 1,
-        delta: 0.1,
+        delta: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.THICKNESS_CONTROL_DELTA,
         keyboardStep: 1,
-        shiftKeyboardStep: 0.1,
-        pageKeyboardStep: 10,
+        shiftKeyboardStep: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.THICKNESS_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.THICKNESS_CONTROL_PAGE_KEYBOARD_STEP,
         enabledProperty: model.sampleEnabledProperty,
       },
     );
@@ -63,10 +64,10 @@ export class MachZehnderSamplePanel extends TitledPanel {
       {
         accessibleName: a11y.indexStringProperty,
         decimals: 3,
-        delta: 0.001,
-        keyboardStep: 0.01,
-        shiftKeyboardStep: 0.001,
-        pageKeyboardStep: 0.1,
+        delta: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.INDEX_CONTROL_DELTA,
+        keyboardStep: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.INDEX_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.INDEX_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.INDEX_CONTROL_PAGE_KEYBOARD_STEP,
         enabledProperty: model.sampleEnabledProperty,
       },
     );
@@ -79,16 +80,19 @@ export class MachZehnderSamplePanel extends TitledPanel {
         accessibleName: a11y.slideTiltStringProperty,
         valuePattern: units.degreesStringProperty,
         decimals: 1,
-        delta: 0.1,
+        delta: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.TILT_CONTROL_DELTA,
         keyboardStep: 1,
-        shiftKeyboardStep: 0.1,
-        pageKeyboardStep: 5,
+        shiftKeyboardStep: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.TILT_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.TILT_CONTROL_PAGE_KEYBOARD_STEP,
         enabledProperty: model.sampleEnabledProperty,
       },
     );
 
     const readouts = new ReadoutBlock([
-      { label: machZehnder.addedPathStringProperty, value: lengthProperty(model.samplePathProperty, 2) },
+      {
+        label: machZehnder.addedPathStringProperty,
+        value: lengthProperty(model.samplePathProperty, MACH_ZEHNDER_SAMPLE_PANEL_SETTINGS.READOUTS_DECIMALS),
+      },
     ]);
 
     super(machZehnder.sampleStringProperty, [insertCheckbox, thicknessControl, indexControl, tiltControl, readouts], {

@@ -1,3 +1,4 @@
+import { MICHELSON_MIRROR_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MichelsonMirrorPanel.ts
  *
@@ -46,10 +47,10 @@ export class MichelsonMirrorPanel extends TitledPanel {
         accessibleName: a11y.coarseStringProperty,
         valuePattern: units.micrometersStringProperty,
         decimals: 2,
-        delta: 0.01,
+        delta: MICHELSON_MIRROR_PANEL_SETTINGS.COARSE_CONTROL_DELTA,
         keyboardStep: 1,
-        shiftKeyboardStep: 0.05,
-        pageKeyboardStep: 20,
+        shiftKeyboardStep: MICHELSON_MIRROR_PANEL_SETTINGS.COARSE_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MICHELSON_MIRROR_PANEL_SETTINGS.COARSE_CONTROL_PAGE_KEYBOARD_STEP,
       },
     );
 
@@ -62,9 +63,9 @@ export class MichelsonMirrorPanel extends TitledPanel {
         valuePattern: units.nanometersStringProperty,
         decimals: 0,
         delta: 1,
-        keyboardStep: 20,
-        shiftKeyboardStep: 2,
-        pageKeyboardStep: 200,
+        keyboardStep: MICHELSON_MIRROR_PANEL_SETTINGS.FINE_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: MICHELSON_MIRROR_PANEL_SETTINGS.FINE_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MICHELSON_MIRROR_PANEL_SETTINGS.FINE_CONTROL_PAGE_KEYBOARD_STEP,
       },
     );
 
@@ -89,7 +90,10 @@ export class MichelsonMirrorPanel extends TitledPanel {
     // would just be a second copy of the same number.
     const readouts = new ReadoutBlock([{ label: michelson.fringesCountedStringProperty, value: fringeCountText }]);
 
-    const buttons = new HBox({ spacing: 6, children: [zeroButton, resetCountButton] });
+    const buttons = new HBox({
+      spacing: MICHELSON_MIRROR_PANEL_SETTINGS.BUTTONS_SPACING,
+      children: [zeroButton, resetCountButton],
+    });
 
     super(michelson.armStringProperty, [coarseControl, fineControl, readouts, buttons], { contentWidth });
   }

@@ -1,3 +1,4 @@
+import { MACH_ZEHNDER_TABLE_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MachZehnderTableNode.ts
  *
@@ -30,25 +31,43 @@ import type { InterferometryLabPreferencesModel } from "../../preferences/Interf
 import type { MachZehnderModel } from "../model/MachZehnderModel.js";
 
 /** Table size, view pixels. */
-const TABLE_WIDTH = 440;
-const TABLE_HEIGHT = 252;
+const TABLE_WIDTH: number = MACH_ZEHNDER_TABLE_NODE_SETTINGS.TABLE_WIDTH;
+const TABLE_HEIGHT: number = MACH_ZEHNDER_TABLE_NODE_SETTINGS.TABLE_HEIGHT;
 
 /** The four corners of the interferometer, in table-local coordinates. */
-const SPLITTER_IN = new Vector2(150, 176);
-const MIRROR_UPPER = new Vector2(150, 68);
-const MIRROR_LOWER = new Vector2(310, 176);
-const SPLITTER_OUT = new Vector2(310, 68);
+const SPLITTER_IN = new Vector2(
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.SPLITTER_IN_X,
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.SPLITTER_IN_Y,
+);
+const MIRROR_UPPER = new Vector2(
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.MIRROR_UPPER_X,
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.MIRROR_UPPER_Y,
+);
+const MIRROR_LOWER = new Vector2(
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.MIRROR_LOWER_X,
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.MIRROR_LOWER_Y,
+);
+const SPLITTER_OUT = new Vector2(
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.SPLITTER_OUT_X,
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.SPLITTER_OUT_Y,
+);
 
 /** Where the light comes from and where it goes. */
-const SOURCE = new Vector2(52, 176);
-const DETECTOR_A = new Vector2(384, 68);
-const DETECTOR_B = new Vector2(310, 26);
+const SOURCE = new Vector2(MACH_ZEHNDER_TABLE_NODE_SETTINGS.SOURCE_X, MACH_ZEHNDER_TABLE_NODE_SETTINGS.SOURCE_Y);
+const DETECTOR_A = new Vector2(
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.DETECTOR_A_X,
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.DETECTOR_A_Y,
+);
+const DETECTOR_B = new Vector2(
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.DETECTOR_B_X,
+  MACH_ZEHNDER_TABLE_NODE_SETTINGS.DETECTOR_B_Y,
+);
 
 /** Where the sample slide sits, in the upper arm. */
-const SAMPLE = new Vector2(230, 68);
+const SAMPLE = new Vector2(MACH_ZEHNDER_TABLE_NODE_SETTINGS.SAMPLE_X, MACH_ZEHNDER_TABLE_NODE_SETTINGS.SAMPLE_Y);
 
 /** Width of the mirrors and plates, view pixels. */
-const OPTIC_WIDTH = 42;
+const OPTIC_WIDTH: number = MACH_ZEHNDER_TABLE_NODE_SETTINGS.OPTIC_WIDTH;
 
 export class MachZehnderTableNode extends Node {
   public constructor(model: MachZehnderModel, preferences: InterferometryLabPreferencesModel) {
@@ -79,7 +98,7 @@ export class MachZehnderTableNode extends Node {
       ],
     });
 
-    const source = createSourceNode(50, 22, beamColor);
+    const source = createSourceNode(50, MACH_ZEHNDER_TABLE_NODE_SETTINGS.SOURCE_HEIGHT, beamColor);
     source.translation = SOURCE;
 
     const splitterIn = createBeamSplitterNode(OPTIC_WIDTH + 8);
@@ -113,19 +132,19 @@ export class MachZehnderTableNode extends Node {
     detectorB.translation = DETECTOR_B;
 
     const sourceLabel = createTableLabel(common.sourceStringProperty);
-    sourceLabel.centerX = SOURCE.x - 10;
-    sourceLabel.top = SOURCE.y + 16;
+    sourceLabel.centerX = SOURCE.x - MACH_ZEHNDER_TABLE_NODE_SETTINGS.CONSTRUCTOR_CENTER_X_OFFSET;
+    sourceLabel.top = SOURCE.y + MACH_ZEHNDER_TABLE_NODE_SETTINGS.CONSTRUCTOR_TOP_OFFSET;
 
     const portALabel = createTableLabel(machZehnder.portAStringProperty);
     portALabel.centerX = DETECTOR_A.x - 6;
     portALabel.top = DETECTOR_A.y + 26;
 
     const portBLabel = createTableLabel(machZehnder.portBStringProperty);
-    portBLabel.left = DETECTOR_B.x + 26;
+    portBLabel.left = DETECTOR_B.x + MACH_ZEHNDER_TABLE_NODE_SETTINGS.CONSTRUCTOR_LEFT_OFFSET;
     portBLabel.centerY = DETECTOR_B.y;
 
     const mirrorLabel = createTableLabel("M₂");
-    mirrorLabel.right = MIRROR_UPPER.x - 26;
+    mirrorLabel.right = MIRROR_UPPER.x - MACH_ZEHNDER_TABLE_NODE_SETTINGS.CONSTRUCTOR_RIGHT_OFFSET;
     mirrorLabel.centerY = MIRROR_UPPER.y;
 
     // ── Path-difference contributions ────────────────────────────────────────
@@ -135,7 +154,7 @@ export class MachZehnderTableNode extends Node {
     // clearest statement of why a Michelson's factor of two exists at all.
     const imbalanceLabel = createTableLabel(pathDeltaProperty(model.pathImbalanceProperty, 0));
     imbalanceLabel.centerX = MIRROR_UPPER.x + 44;
-    imbalanceLabel.bottom = MIRROR_UPPER.y - 12;
+    imbalanceLabel.bottom = MIRROR_UPPER.y - MACH_ZEHNDER_TABLE_NODE_SETTINGS.CONSTRUCTOR_BOTTOM_OFFSET;
     imbalanceLabel.visibleProperty = preferences.showOpticalPathProperty;
 
     const samplePathLabel = createTableLabel(pathDeltaProperty(model.samplePathProperty, 0));
@@ -148,7 +167,7 @@ export class MachZehnderTableNode extends Node {
 
     const sampleLabel = createTableLabel(machZehnder.sampleStringProperty);
     sampleLabel.centerX = SAMPLE.x;
-    sampleLabel.top = SAMPLE.y + 16;
+    sampleLabel.top = SAMPLE.y + MACH_ZEHNDER_TABLE_NODE_SETTINGS.CONSTRUCTOR_TOP_OFFSET;
     sampleLabel.visibleProperty = model.sampleEnabledProperty;
 
     this.children = [

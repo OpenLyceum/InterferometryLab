@@ -1,3 +1,4 @@
+import { LIGHT_SOURCE_MODEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * LightSourceModel.ts
  *
@@ -31,21 +32,21 @@ import { coherenceLength, normalizeWeights, type SpectralGroup, splitLine } from
  * discharge lamp. Each line on its own stays coherent over tens of millimetres;
  * it is the *pair* that makes the fringes come and go.
  */
-const SODIUM_LINE_BANDWIDTH_NM = 0.005;
+const SODIUM_LINE_BANDWIDTH_NM: number = LIGHT_SOURCE_MODEL_SETTINGS.SODIUM_LINE_BANDWIDTH_NM;
 
 /**
  * A filtered lamp narrower than this is rendered as one group: a single Gaussian
  * whose analytic envelope is exact, and whose colour does not visibly vary
  * across the band. Wider bands are split so their colours separate.
  */
-const SINGLE_GROUP_BANDWIDTH_NM = 5;
+const SINGLE_GROUP_BANDWIDTH_NM: number = LIGHT_SOURCE_MODEL_SETTINGS.SINGLE_GROUP_BANDWIDTH_NM;
 
 /** Wavelength (nm) of one group per this many nm of bandwidth, once split. */
-const NM_PER_GROUP = 5;
+const NM_PER_GROUP: number = LIGHT_SOURCE_MODEL_SETTINGS.NM_PER_GROUP;
 
 /** Wavelength bounds (nm) of the band the broadband source is sampled over. */
-const BROADBAND_MIN_NM = 390;
-const BROADBAND_MAX_NM = 710;
+const BROADBAND_MIN_NM: number = LIGHT_SOURCE_MODEL_SETTINGS.BROADBAND_MIN_NM;
+const BROADBAND_MAX_NM: number = LIGHT_SOURCE_MODEL_SETTINGS.BROADBAND_MAX_NM;
 
 /** The spectrum a source produces, plus the summary numbers a readout wants. */
 export type SourceSpectrum = {
@@ -126,7 +127,7 @@ export class LightSourceModel {
       units: "nm",
     });
 
-    this.filterBandwidthProperty = new NumberProperty(10, {
+    this.filterBandwidthProperty = new NumberProperty(LIGHT_SOURCE_MODEL_SETTINGS.FILTER_BANDWIDTH_DEFAULT, {
       range: BANDWIDTH_RANGE_NM,
       units: "nm",
     });

@@ -1,3 +1,4 @@
+import { MICHELSON_GAS_CELL_PANEL_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * MichelsonGasCellPanel.ts
  *
@@ -41,10 +42,10 @@ export class MichelsonGasCellPanel extends TitledPanel {
         accessibleName: a11y.pressureStringProperty,
         valuePattern: units.kilopascalsStringProperty,
         decimals: 1,
-        delta: 0.5,
-        keyboardStep: 2,
-        shiftKeyboardStep: 0.5,
-        pageKeyboardStep: 20,
+        delta: MICHELSON_GAS_CELL_PANEL_SETTINGS.PRESSURE_CONTROL_DELTA,
+        keyboardStep: MICHELSON_GAS_CELL_PANEL_SETTINGS.PRESSURE_CONTROL_KEYBOARD_STEP,
+        shiftKeyboardStep: MICHELSON_GAS_CELL_PANEL_SETTINGS.PRESSURE_CONTROL_SHIFT_KEYBOARD_STEP,
+        pageKeyboardStep: MICHELSON_GAS_CELL_PANEL_SETTINGS.PRESSURE_CONTROL_PAGE_KEYBOARD_STEP,
         enabledProperty: model.gasCellEnabledProperty,
       },
     );
@@ -52,7 +53,13 @@ export class MichelsonGasCellPanel extends TitledPanel {
     // Six decimals: air's refractivity is 2.9 × 10⁻⁴, so anything less shows a
     // flat 1.000 no matter what the pressure does.
     const readouts = new ReadoutBlock([
-      { label: michelson.indexOfRefractionStringProperty, value: plainProperty(model.gasIndexProperty, 6) },
+      {
+        label: michelson.indexOfRefractionStringProperty,
+        value: plainProperty(
+          model.gasIndexProperty,
+          MICHELSON_GAS_CELL_PANEL_SETTINGS.GAS_INDEX_PLAIN_PROPERTY_DECIMALS,
+        ),
+      },
       { label: michelson.fringesShiftedStringProperty, value: plainProperty(model.gasCellFringeShiftProperty, 1) },
     ]);
 

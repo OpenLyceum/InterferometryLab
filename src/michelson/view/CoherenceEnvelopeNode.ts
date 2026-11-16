@@ -1,3 +1,4 @@
+import { COHERENCE_ENVELOPE_NODE_SETTINGS } from "../../InterferometryLabConstants.js";
 /**
  * CoherenceEnvelopeNode.ts
  *
@@ -41,7 +42,7 @@ import { StringManager } from "../../i18n/StringManager.js";
 import type { MichelsonModel } from "../model/MichelsonModel.js";
 
 /** Points sampled across the plot. */
-const SAMPLE_COUNT = 500;
+const SAMPLE_COUNT: number = COHERENCE_ENVELOPE_NODE_SETTINGS.SAMPLE_COUNT;
 
 /**
  * Widest path difference the plot ever shows, nm. The mirror is traversed twice,
@@ -55,24 +56,24 @@ const MAX_HALF_SPAN_NM = 2 * MICHELSON_COARSE_RANGE_NM.max;
  * the curve would otherwise collapse onto the axis; a couple of wavelengths of
  * margin keeps the needle a shape rather than a spike.
  */
-const MIN_HALF_SPAN_NM = 2000;
+const MIN_HALF_SPAN_NM: number = COHERENCE_ENVELOPE_NODE_SETTINGS.MIN_HALF_SPAN_NM;
 
 /**
  * How much of the source's feature scale to show either side of zero. Enough to
  * get past the first null of a doublet, or well down the tail of a Gaussian.
  */
-const SPAN_IN_FEATURES = 1.4;
+const SPAN_IN_FEATURES: number = COHERENCE_ENVELOPE_NODE_SETTINGS.SPAN_IN_FEATURES;
 
 /**
  * Bounds of the visibility axis, padded at both ends. A laser's curve is flat at
  * 1 and a doublet's touches 0; against the frame either would read as an empty
  * box rather than as the answer.
  */
-const VISIBILITY_MIN = -0.06;
-const VISIBILITY_MAX = 1.08;
+const VISIBILITY_MIN: number = COHERENCE_ENVELOPE_NODE_SETTINGS.VISIBILITY_MIN;
+const VISIBILITY_MAX: number = COHERENCE_ENVELOPE_NODE_SETTINGS.VISIBILITY_MAX;
 
 /** Spacing of the horizontal gridlines, in visibility. */
-const VISIBILITY_GRID_SPACING = 0.5;
+const VISIBILITY_GRID_SPACING: number = COHERENCE_ENVELOPE_NODE_SETTINGS.VISIBILITY_GRID_SPACING;
 
 export type CoherenceEnvelopeNodeOptions = {
   readonly width: number;
@@ -109,22 +110,25 @@ export class CoherenceEnvelopeNode extends VBox {
 
     const curve = new LinePlot(chartTransform, [], {
       stroke: InterferometryLabColors.plotTraceColorProperty,
-      lineWidth: 1.6,
+      lineWidth: COHERENCE_ENVELOPE_NODE_SETTINGS.CURVE_LINE_WIDTH,
     });
 
     // Where the instrument is standing on the curve. Drawn full height so it can
     // be read against the trace without hunting for an intersection.
     const marker = new Line(0, 0, 0, options.height, {
       stroke: InterferometryLabColors.valueColorProperty,
-      lineWidth: 1.4,
-      lineDash: [4, 3],
+      lineWidth: COHERENCE_ENVELOPE_NODE_SETTINGS.MARKER_LINE_WIDTH,
+      lineDash: [
+        COHERENCE_ENVELOPE_NODE_SETTINGS.MARKER_LINE_DASH_DASH,
+        COHERENCE_ENVELOPE_NODE_SETTINGS.CONSTRUCTOR_MARKER_LINE_DASH_DASH,
+      ],
     });
 
     // Gridlines at zero, half and full visibility, so "the fringes are gone" and
     // "the fringes are faint" are distinguishable at a glance.
     const gridLines = new GridLineSet(chartTransform, Orientation.VERTICAL, VISIBILITY_GRID_SPACING, {
       stroke: InterferometryLabColors.plotAxisColorProperty,
-      lineWidth: 0.5,
+      lineWidth: COHERENCE_ENVELOPE_NODE_SETTINGS.GRID_LINES_LINE_WIDTH,
     });
 
     const clipped = new Node({
@@ -178,7 +182,7 @@ export class CoherenceEnvelopeNode extends VBox {
     const description = describeEnvelope(model);
 
     super({
-      spacing: 5,
+      spacing: COHERENCE_ENVELOPE_NODE_SETTINGS.CONSTRUCTOR_SPACING,
       align: "center",
       children: [title, chart, axisLabel],
       accessibleParagraph: description.paragraph,
