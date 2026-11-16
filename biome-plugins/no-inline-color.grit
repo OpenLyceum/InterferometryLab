@@ -1,0 +1,26 @@
+// Flags hardcoded colors outside *Colors.ts: new Color(...) with only literal arguments,
+// and string literals given as fill or stroke. Colors belong in the sim's *Colors.ts as
+// ProfileColorProperty so the default and projector profiles both work. Allowed: computed
+// colors (new Color(r, g, b), new Color(this.c.r, ...), colormaps), "transparent", "" and
+// invisible hit areas, rgba(0,0,0,a) with a below 0.1. The biome.json override excludes **/*Colors.ts.
+// Suppress a deliberate use with: // biome-ignore lint/plugin/no-inline-color: <reason>
+// GritQL regexes here must use non-capturing groups (?:...); a plain (...) silently never matches.
+language js
+
+or {
+  `new Color($...)` as $hit where {
+    $hit <: JsNewExpression(arguments = $args),
+    not $args <: contains or { JsIdentifierExpression(), JsThisExpression() }
+  },
+  `$key: $hit` where {
+    $key <: or { `fill`, `stroke` },
+    $hit <: JsStringLiteralExpression(),
+    not $hit <: or { `"transparent"`, `""`, r"\"rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0(?:\.0\d*)?\s*\)\"" }
+  }
+} where {
+  register_diagnostic(
+    span = $hit,
+    message = "Define this color in the sim's *Colors.ts as a ProfileColorProperty instead of hardcoding it in a view.",
+    severity = "info"
+  )
+}
