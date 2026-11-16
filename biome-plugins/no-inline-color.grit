@@ -21,6 +21,6 @@ or {
   register_diagnostic(
     span = $hit,
     message = "Define this color in the sim's *Colors.ts as a ProfileColorProperty instead of hardcoding it in a view.",
-    severity = "info"
+    severity = "warn"
   )
 }
