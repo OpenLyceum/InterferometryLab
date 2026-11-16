@@ -23,7 +23,7 @@
     "build": "tsc && vite build",
     "build:single": "tsc && vite build --mode single",
     "preview": "vite preview",
-    "lint": "biome check .",
+    "lint": "biome check --error-on-warnings .",
     "format": "biome format --write .",
     "fix": "biome check --write .",
     "check": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.test.json --noEmit",
@@ -40,7 +40,7 @@
     "clean": "rm -rf dist",
     "prepare": "test \"$(git rev-parse --show-toplevel 2>/dev/null)\" = \"$PWD\" && git config core.hooksPath .githooks || true",
     "knip": "knip",
-    "test:architecture": "node --test tests/architecture.test.mjs"
+    "test:architecture": "node --test tests/architecture.node-test.ts"
   },
   "dependencies": {
     "scenerystack": "^3.0.0"

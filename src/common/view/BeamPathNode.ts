@@ -78,7 +78,7 @@ export class BeamPathNode extends Node {
     if (options?.intensityProperty) {
       this.intensityProperty = options.intensityProperty;
       this.intensityListener = (intensity: number) => {
-        const clamped = intensity <= 0 ? 0 : intensity >= 1 ? 1 : intensity;
+        const clamped = intensity <= 0 ? 0 : Math.min(intensity, 1);
         this.core.opacity = clamped;
         this.halo.opacity = HALO_OPACITY * clamped;
       };

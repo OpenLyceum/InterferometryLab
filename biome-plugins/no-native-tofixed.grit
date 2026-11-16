@@ -1,0 +1,14 @@
+// Flags Number.prototype.toFixed (zero or one argument). The scenerystack/dot
+// helpers take two arguments — toFixed(value, digits), Utils.toFixed(value, digits),
+// StringUtils.toFixedLTR(value, digits) — so they never match.
+// Suppress a deliberate use with: // biome-ignore lint/plugin/no-native-tofixed: <reason>
+language js
+
+or { `$value.toFixed()`, `$value.toFixed($digits)` } as $call where {
+  not $call <: `$_.toFixed($_, $_)`,
+  register_diagnostic(
+    span = $call,
+    message = "Use toFixed(value, digits) from scenerystack/dot instead of Number.prototype.toFixed, which rounds inconsistently across browsers.",
+    severity = "warn"
+  )
+}

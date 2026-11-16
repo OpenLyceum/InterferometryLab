@@ -32,7 +32,14 @@ test("detector pixels respect translation, scale, clipping and opacity", async (
     context.imageSmoothingEnabled = false;
 
     const sample = (x: number, y: number): number[] => Array.from(context.getImageData(x, y, 1, 1).data);
-    const results = [];
+    const results: {
+      origin: number[];
+      inside: number[];
+      clipped: number[];
+      beyond: number[];
+      opacity: number;
+      smoothing: boolean;
+    }[] = [];
     // Changing source also reallocates the renderer's monochromatic/broadband buffer.
     for (const source of [SourceType.HELIUM_NEON, SourceType.WHITE_LIGHT, SourceType.HELIUM_NEON]) {
       model.lightSource.sourceTypeProperty.value = source;

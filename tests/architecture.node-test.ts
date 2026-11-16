@@ -1,16 +1,23 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const cli = join(root, "node_modules/dependency-cruiser/bin/dependency-cruiser.mjs");
 
 // Use the actual CLI, parser and resolver: matching regexes alone misses graph regressions.
-function cruise(files, overlay, guidance = "", packageMetadata = {}) {
+type Files = Record<string, string>;
+
+function cruise(
+  files: Files,
+  overlay?: string,
+  guidance = "",
+  packageMetadata: Record<string, unknown> = {},
+): SpawnSyncReturns<string> {
   const directory = mkdtempSync(join(tmpdir(), "architecture-"));
   try {
     copyFileSync(join(root, ".dependency-cruiser.cjs"), join(directory, ".dependency-cruiser.cjs"));
@@ -18,7 +25,7 @@ function cruise(files, overlay, guidance = "", packageMetadata = {}) {
     for (const name of ["scenerystack", "vitest"]) {
       symlinkSync(join(root, "node_modules", name), join(directory, "node_modules", name), "dir");
     }
-    const contents = {
+    const contents: Files = {
       "package.json": JSON.stringify({
         name: "architecture-fixture",
         type: "module",
@@ -50,12 +57,12 @@ function cruise(files, overlay, guidance = "", packageMetadata = {}) {
   }
 }
 
-function violations(result) {
+function violations(result: SpawnSyncReturns<string>): string[] {
   assert.equal(result.stderr, "", result.stderr);
-  return [...result.stdout.matchAll(/^\s+(?:error|warn|info) ([^:]+):/gm)].map((match) => match[1]);
+  return [...result.stdout.matchAll(/^\s+(?:error|warn|info) ([^:]+):/gm)].map((match) => match[1] ?? "");
 }
 
-const forbidden = [
+const forbidden: [string, Files][] = [
   ["no-unresolved", { "src/main.ts": 'import "./Imagined.js";' }],
   ["no-undeclared-packages", { "src/main.ts": 'import "undeclared-fixture";' }],
   ["no-node-builtins", { "src/main.ts": 'import { readFileSync } from "node:fs";' }],
@@ -87,7 +94,7 @@ const forbidden = [
       "src/preferences/SimPreferencesNode.ts": "export const x = 1;",
     },
   ],
-  ...["common", "preferences", "i18n"].map((folder) => [
+  ...["common", "preferences", "i18n"].map((folder): [string, Files] => [
     `no-${folder}-to-screen`,
     {
       [`src/${folder}/helper.ts`]: 'import "../lab/model/Model.js";',
@@ -142,7 +149,7 @@ test("allows bootstrap metadata, same-screen imports, shared models, and type-on
 });
 
 const source = { "src/main.ts": 'import "./missing.js";' };
-for (const [description, overlay] of [
+const failClosedOverlays: [string, string][] = [
   ["missing overlay dependency", 'require("./absent.cjs");'],
   ["overlay runtime exception", 'throw new Error("overlay exploded");'],
   ["malformed overlay", "module.exports = null;"],
@@ -154,7 +161,9 @@ for (const [description, overlay] of [
     'module.exports = { forbidden: [{ name: "no-unresolved", severity: "ignore", from: {}, to: {} }] };',
   ],
   ["undocumented exclusion", 'module.exports = { options: { exclude: "^src/main\\\\.ts$" } };'],
-]) {
+];
+
+for (const [description, overlay] of failClosedOverlays) {
   test(`fails closed on ${description}`, () => {
     const result = cruise(source, overlay);
     assert.notEqual(result.status, 0);
@@ -209,16 +218,20 @@ test("rejects an exclusion that matches everything, even when documented", () =>
   assert.match(result.stderr, /must not match the empty string/);
 });
 
-
 test("allows static images outside src while rejecting executable asset helpers", () => {
-  const image = cruise({ "src/main.ts": 'import image from "../assets/photo.jpg";', "assets/photo.jpg": "image fixture" });
+  const image = cruise({
+    "src/main.ts": 'import image from "../assets/photo.jpg";',
+    "assets/photo.jpg": "image fixture",
+  });
   assert.deepEqual(violations(image), [], image.stdout);
   assert.equal(image.status, 0);
-  const helper = cruise({ "src/main.ts": 'import "../assets/helper.js";', "assets/helper.ts": "export const value = 1;" });
+  const helper = cruise({
+    "src/main.ts": 'import "../assets/helper.js";',
+    "assets/helper.ts": "export const value = 1;",
+  });
   assert.ok(violations(helper).includes("no-src-to-tooling"), helper.stdout);
   assert.notEqual(helper.status, 0);
 });
-
 
 test("rejects model value imports of root color modules", () => {
   const result = cruise({
@@ -276,12 +289,9 @@ test("optional toolkit entry points belong to the template only", () => {
 });
 
 test("rejects an imported package declared in multiple dependency categories", () => {
-  const result = cruise(
-    { "src/main.ts": 'import "scenerystack/axon";' },
-    undefined,
-    "",
-    { devDependencies: { scenerystack: "*", vitest: "*" } },
-  );
+  const result = cruise({ "src/main.ts": 'import "scenerystack/axon";' }, undefined, "", {
+    devDependencies: { scenerystack: "*", vitest: "*" },
+  });
   assert.ok(violations(result).includes("no-duplicate-dep-types"), result.stdout);
   assert.notEqual(result.status, 0);
 });
@@ -291,7 +301,9 @@ test("warns on installed package deprecation metadata", () => {
     {
       "src/main.ts": 'import "deprecated-fixture";',
       "node_modules/deprecated-fixture/package.json": JSON.stringify({
-        name: "deprecated-fixture", main: "index.js", deprecated: "Use its replacement.",
+        name: "deprecated-fixture",
+        main: "index.js",
+        deprecated: "Use its replacement.",
       }),
       "node_modules/deprecated-fixture/index.js": "export const value = 1;",
     },
@@ -313,11 +325,15 @@ test("resolves browser conditional exports, browser entry fields and browser ali
       }),
       "node_modules/conditional-fixture/browser.js": "export const value = 1;",
       "node_modules/entry-fixture/package.json": JSON.stringify({
-        name: "entry-fixture", browser: "browser.js", main: "missing-node.js",
+        name: "entry-fixture",
+        browser: "browser.js",
+        main: "missing-node.js",
       }),
       "node_modules/entry-fixture/browser.js": "export const value = 1;",
       "node_modules/alias-fixture/package.json": JSON.stringify({
-        name: "alias-fixture", main: "node.js", browser: { "./node.js": "./browser.js" },
+        name: "alias-fixture",
+        main: "node.js",
+        browser: { "./node.js": "./browser.js" },
       }),
       "node_modules/alias-fixture/browser.js": "export const value = 1;",
     },
