@@ -46,6 +46,7 @@ branches to the renderer.
 | `src/common/TimeModel.ts` | Play/pause clock composed into the Mach-Zehnder and Fabry-Pérot models |
 | `src/common/view/spectralColor.ts` | CIE XYZ colour pipeline — see the carve-out below |
 | `src/common/view/InterferometryLabNumberControl.ts` | Themed slider; requires an accessible name and explicit keyboard steps |
+| `src/InterferometryLabConstants.ts` | Named numeric constants (layout px, physics SI units) |
 | `src/{michelson,mach-zehnder,fabry-perot}/` | One folder per screen, `model/` + `view/` |
 
 ## Model

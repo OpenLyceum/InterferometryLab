@@ -262,9 +262,9 @@ export const INTERFEROMETRY_LAB_SCREEN_ICONS_SETTINGS = {
 
 /** Settings for common/model/LightSourceModel.ts. */
 export const LIGHT_SOURCE_MODEL_SETTINGS = {
-  /** * Doppler-broadened width (FWHM, nm) of a single sodium D line in a low-pressure discharge lamp. Each line on its own stays coherent over tens of millimetres; it is the *pair* that makes the fringes come and go. */
+  /** Doppler-broadened width (FWHM, nm) of a single sodium D line in a low-pressure discharge lamp. Each line on its own stays coherent over tens of millimetres; it is the *pair* that makes the fringes come and go. */
   SODIUM_LINE_BANDWIDTH_NM: 0.005,
-  /** * A filtered lamp narrower than this is rendered as one group: a single Gaussian whose analytic envelope is exact, and whose colour does not visibly vary across the band. Wider bands are split so their colours separate. */
+  /** A filtered lamp narrower than this is rendered as one group: a single Gaussian whose analytic envelope is exact, and whose colour does not visibly vary across the band. Wider bands are split so their colours separate. */
   SINGLE_GROUP_BANDWIDTH_NM: 5,
   /** Wavelength (nm) of one group per this many nm of bandwidth, once split. */
   NM_PER_GROUP: 5,
@@ -310,18 +310,20 @@ export const FRINGE_PATTERN_NODE_SETTINGS = {
 
 /** Settings for common/view/IntensityProfileNode.ts. */
 export const INTENSITY_PROFILE_NODE_SETTINGS = {
-  SUM_PLOT_LINE_DASH_DASH: 5, // px
-  CONSTRUCTOR_SUM_PLOT_LINE_DASH_DASH: 4, // px
+  /** Sum-trace dash length (px). */
+  SUM_PLOT_LINE_DASH: 5, // px
+  /** Sum-trace gap length (px). */
+  SUM_PLOT_LINE_GAP: 4, // px
 
   CREATE_LEGEND_SPACING_VARIANT_2: 4, // px
 
-  /** * Points sampled across the detector. Matched to the renderer's monochromatic grid so the trace and the image agree about how much detail there is; sampling finer would draw fringes the detector above it cannot resolve. */
+  /** Points sampled across the detector. Matched to the renderer's monochromatic grid so the trace and the image agree about how much detail there is; sampling finer would draw fringes the detector above it cannot resolve. */
   SAMPLE_COUNT: 240,
-  /** * Below this modulation the trace is called flat rather than fringed. A pattern this shallow is a single fringe filling the field, which is a real and commonly reached state — see `opdSpread` in the model. */
+  /** Below this modulation the trace is called flat rather than fringed. A pattern this shallow is a single fringe filling the field, which is a real and commonly reached state — see `opdSpread` in the model. */
   FLAT_CONTRAST: 0.02,
-  /** Intensity min (px). */
+  /** Lower intensity axis bound (dimensionless). */
   INTENSITY_MIN: -0.06,
-  /** Intensity max (px). */
+  /** Upper intensity axis bound (dimensionless). */
   INTENSITY_MAX: 1.08,
   /** Spacing of the horizontal gridlines, in intensity. */
   INTENSITY_GRID_SPACING: 0.5,
@@ -451,7 +453,7 @@ export const FABRY_PEROT_MODEL_SETTINGS = {
   INITIAL_RESONANCE_ORDER: 340,
   /** Reference wavelength for the initial cavity spacing (nm). */
   INITIAL_REFERENCE_WAVELENGTH: 589,
-  /** * Linewidth (FWHM, nm) of each source line. Narrow enough that the etalon's own response, not the source, sets what the rings look like — which is the regime an etalon is used in. */
+  /** Linewidth (FWHM, nm) of each source line. Narrow enough that the etalon's own response, not the source, sets what the rings look like — which is the regime an etalon is used in. */
   SOURCE_LINEWIDTH_NM: 0.0005,
   /** How far the scan sweeps the spacing, in wavelengths. */
   SCAN_AMPLITUDE_WAVES: 1.5,
@@ -730,9 +732,9 @@ export const PHOTON_MARKS_NODE_SETTINGS = {
 export const MICHELSON_MODEL_SETTINGS = {
   /** Initial coarse offset nm (nm). */
   INITIAL_COARSE_OFFSET_NM: 20000,
-  /** * Half the light goes each way at the splitter, so each route delivers half the power to the detector. */
+  /** Half the light goes each way at the splitter, so each route delivers half the power to the detector. */
   ROUTE_INTENSITY: 0.5,
-  /** * Display gain. Two equal routes give an intensity between 0 and 2, so halving it puts a bright fringe exactly at full scale. */
+  /** Display gain. Two equal routes give an intensity between 0 and 2, so halving it puts a bright fringe exactly at full scale. */
   EXPOSURE: 0.5,
 } as const;
 
@@ -743,11 +745,11 @@ export const COHERENCE_ENVELOPE_NODE_SETTINGS = {
 
   /** Points sampled across the plot. */
   SAMPLE_COUNT: 500,
-  /** * Narrowest span, nm. White light's coherence length is about a micrometre and the curve would otherwise collapse onto the axis; a couple of wavelengths of margin keeps the needle a shape rather than a spike. */
+  /** Narrowest span, nm. White light's coherence length is about a micrometre and the curve would otherwise collapse onto the axis; a couple of wavelengths of margin keeps the needle a shape rather than a spike. */
   MIN_HALF_SPAN_NM: 2000,
-  /** * How much of the source's feature scale to show either side of zero. Enough to get past the first null of a doublet, or well down the tail of a Gaussian. */
+  /** How much of the source's feature scale to show either side of zero. Enough to get past the first null of a doublet, or well down the tail of a Gaussian. */
   SPAN_IN_FEATURES: 1.4,
-  /** * Bounds of the visibility axis, padded at both ends. A laser's curve is flat at 1 and a doublet's touches 0; against the frame either would read as an empty box rather than as the answer. */
+  /** Bounds of the visibility axis, padded at both ends. A laser's curve is flat at 1 and a doublet's touches 0; against the frame either would read as an empty box rather than as the answer. */
   VISIBILITY_MIN: -0.06,
   /** Visibility max (px). */
   VISIBILITY_MAX: 1.08,
@@ -797,9 +799,9 @@ export const MICHELSON_MIRROR_PANEL_SETTINGS = {
 
 /** Settings for michelson/view/MichelsonScreenSummaryContent.ts. */
 export const MICHELSON_SCREEN_SUMMARY_CONTENT_SETTINGS = {
-  /** * Below this contrast the pattern is described as washed out; the fringes are still there mathematically but nobody could read them off the screen. */
+  /** Below this contrast the pattern is described as washed out; the fringes are still there mathematically but nobody could read them off the screen. */
   WASHED_OUT_VISIBILITY: 0.08,
-  /** * Tilt (µrad) above which the wedge dominates the ray-angle term and the rings have straightened into bars. */
+  /** Tilt (µrad) above which the wedge dominates the ray-angle term and the rings have straightened into bars. */
   STRAIGHT_FRINGE_TILT_URAD: 25,
 } as const;
 
@@ -857,7 +859,7 @@ export const MICHELSON_TABLE_NODE_SETTINGS = {
   GAS_CELL_Y: 94,
   /** Width of the mirrors and plates, view pixels. */
   OPTIC_WIDTH: 46,
-  /** * How far the movable mirror slides on screen at the end of its travel, view pixels. Purely illustrative — see the class comment. */
+  /** How far the movable mirror slides on screen at the end of its travel, view pixels. Purely illustrative — see the class comment. */
   MIRROR_TRAVEL_PIXELS: 14,
   /** Max width max width (px). */
   MAX_WIDTH_MAX_WIDTH: 120,

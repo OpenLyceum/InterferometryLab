@@ -161,8 +161,8 @@ export class IntensityProfileNode extends VBox {
           stroke: InterferometryLabColors.plotSumColorProperty,
           lineWidth: INTENSITY_PROFILE_NODE_SETTINGS.SUM_PLOT_LINE_WIDTH,
           lineDash: [
-            INTENSITY_PROFILE_NODE_SETTINGS.SUM_PLOT_LINE_DASH_DASH,
-            INTENSITY_PROFILE_NODE_SETTINGS.CONSTRUCTOR_SUM_PLOT_LINE_DASH_DASH,
+            INTENSITY_PROFILE_NODE_SETTINGS.SUM_PLOT_LINE_DASH,
+            INTENSITY_PROFILE_NODE_SETTINGS.SUM_PLOT_LINE_GAP,
           ],
         })
       : null;
