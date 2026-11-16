@@ -166,8 +166,8 @@ export default defineConfig(({ mode }) => {
     // So the build can be served from an arbitrary path
     base: "./",
     build: {
-      // Fleet browser target. Oxc accepts ES2024 directly.
-      target: "es2024",
+      // Fleet browser target. Oxc accepts ES2025 directly.
+      target: "es2025",
       // SceneryStack bundles exceed Vite's default 500 kB chunk warning.
       chunkSizeWarningLimit: 5000,
       ...(single && {
