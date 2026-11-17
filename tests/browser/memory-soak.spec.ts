@@ -45,7 +45,7 @@ test.describe("Memory soak", () => {
     });
 
     await page.goto("/?ea&homeScreen=false");
-    await page.waitForSelector("#sim", { timeout: 30_000 });
+    await page.waitForSelector("#sim", { state: "attached", timeout: 30_000 });
 
     // Warm-up: one reset + GC so first metrics are not cold-start dominated.
     await clickResetAll(page);
