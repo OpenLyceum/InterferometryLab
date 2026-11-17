@@ -36,12 +36,12 @@
     "test:fuzz": "node scripts/test-fuzz.ts",
     "test:fuzz:quick": "node scripts/test-fuzz.ts 10",
     "test:fuzz:long": "node scripts/test-fuzz.ts 300",
+    "test:soak": "npx playwright test tests/browser/memory-soak.spec.ts",
     "icons": "node scripts/generate-icons.ts",
     "clean": "rm -rf dist",
     "prepare": "test \"$(git rev-parse --show-toplevel 2>/dev/null)\" = \"$PWD\" && git config core.hooksPath .githooks || true",
     "knip": "knip",
-    "test:architecture": "node --test tests/*.node-test.ts",
-    "test:soak": "npx playwright test tests/browser/memory-soak.spec.ts"
+    "test:architecture": "node --test tests/*.node-test.ts"
   },
   "dependencies": {
     "scenerystack": "^3.0.0"
