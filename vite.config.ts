@@ -88,9 +88,56 @@ function parseSimConfig(raw: Record<string, unknown>): SimConfig {
 const simConfig: SimConfig = parseSimConfig(simConfigJson);
 
 /**
- * Security headers required for:
- *  - COOP/COEP: SharedArrayBuffer support
- *  - CSP: restrict resource loading to same-origin + known blob/data exceptions
+ * Content-Security-Policy directives: restrict resource loading to same-origin +
+ * known blob/data exceptions. Sent as a header by the dev and preview servers and,
+ * because GitHub Pages cannot send headers, written into the built index.html as a
+ * `<meta>` tag by `cspMetaTag()` below.
+ */
+const cspDirectives: readonly string[] = [
+  "default-src 'self'",
+  // TODO(scenerystack): drop 'unsafe-eval' when SceneryStack no longer needs
+  // Function/eval for query-parameter parsing — reopen a CSP audit then.
+  // 'unsafe-eval' is required for SceneryStack query parameter parsing
+  "script-src 'self' 'unsafe-eval'",
+  // Event-handler attributes are governed by script-src-attr, separately from
+  // inline <script>. SceneryStack's ParallelDOM.pdomInputEnabledListener sets an
+  // inline `onclick` on any control whose input it disables (`return false`, then
+  // `""` when re-enabled) — e.g. the time-control step button whenever the clock
+  // starts or stops. 'unsafe-hashes' lets exactly those two handlers through;
+  // anything else still fails. Without it the fuzz suite fails on the CSP console
+  // error. Regenerate: printf 'return false' | openssl dgst -sha256 -binary | base64
+  "script-src-attr 'unsafe-hashes' " +
+    "'sha256-GZIcz60Uwd6wT3vaYke/atSr53TehbYAPepOa3d03Vw=' " +
+    "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
+  "worker-src blob: 'self'",
+  // TODO(scenerystack): drop 'unsafe-inline' when SceneryStack stops setting
+  // element.style / cssText for theming (same CSP revisit as unsafe-eval).
+  // Inline styles are set via element.style / cssText throughout the UI layer
+  "style-src 'self' 'unsafe-inline'",
+  // data: for icons
+  "img-src 'self' data:",
+  "media-src 'self' blob:",
+  // blob: for fetch inside workers
+  // plus any runtime data origins the sim declares in sim.config.json
+  ["connect-src 'self' blob:", ...simConfig.connectSrc].join(" "),
+  // data: because the build (never the dev server) inlines assets under 4 kB as data: URIs,
+  // e.g. KaTeX's small .woff2 fonts in the built CSS. A data: URI cannot reach another origin.
+  "font-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  // Header only: browsers ignore frame-ancestors in a <meta> CSP (and log a console
+  // error), so the deployed sims stay embeddable in the textbooks' iframes.
+  "frame-ancestors 'none'",
+];
+
+/** Directives a `<meta>` CSP cannot carry (CSP3 §6.2: ignored with a console error). */
+const HEADER_ONLY_CSP_DIRECTIVES: ReadonlySet<string> = new Set(["frame-ancestors", "report-uri", "sandbox"]);
+
+/**
+ * Security headers for the dev and preview servers:
+ *  - COOP/COEP: SharedArrayBuffer support (dev/preview only: GitHub Pages cannot
+ *    send them, so `crossOriginIsolated` is false on the deployed sims)
+ *  - CSP: see `cspDirectives`
  *  - Referrer / Permissions: tighten default browser leakage
  *  - X-Content-Type-Options: prevent MIME sniffing
  *  - X-Frame-Options: prevent clickjacking (belt-and-suspenders alongside frame-ancestors)
@@ -98,38 +145,7 @@ const simConfig: SimConfig = parseSimConfig(simConfigJson);
 const securityHeaders: Record<string, string> = {
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Embedder-Policy": "require-corp",
-  "Content-Security-Policy": [
-    "default-src 'self'",
-    // TODO(scenerystack): drop 'unsafe-eval' when SceneryStack no longer needs
-    // Function/eval for query-parameter parsing — reopen a CSP audit then.
-    // 'unsafe-eval' is required for SceneryStack query parameter parsing
-    "script-src 'self' 'unsafe-eval'",
-    // Event-handler attributes are governed by script-src-attr, separately from
-    // inline <script>. SceneryStack's ParallelDOM.pdomInputEnabledListener sets an
-    // inline `onclick` on any control whose input it disables (`return false`, then
-    // `""` when re-enabled) — e.g. the time-control step button whenever the clock
-    // starts or stops. 'unsafe-hashes' lets exactly those two handlers through;
-    // anything else still fails. Without it the fuzz suite fails on the CSP console
-    // error. Regenerate: printf 'return false' | openssl dgst -sha256 -binary | base64
-    "script-src-attr 'unsafe-hashes' " +
-      "'sha256-GZIcz60Uwd6wT3vaYke/atSr53TehbYAPepOa3d03Vw=' " +
-      "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='",
-    "worker-src blob: 'self'",
-    // TODO(scenerystack): drop 'unsafe-inline' when SceneryStack stops setting
-    // element.style / cssText for theming (same CSP revisit as unsafe-eval).
-    // Inline styles are set via element.style / cssText throughout the UI layer
-    "style-src 'self' 'unsafe-inline'",
-    // data: for icons
-    "img-src 'self' data:",
-    "media-src 'self' blob:",
-    // blob: for fetch inside workers
-    // plus any runtime data origins the sim declares in sim.config.json
-    ["connect-src 'self' blob:", ...simConfig.connectSrc].join(" "),
-    "font-src 'self'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "frame-ancestors 'none'",
-  ].join("; "),
+  "Content-Security-Policy": cspDirectives.join("; "),
   "Referrer-Policy": "strict-origin-when-cross-origin",
   // Locked by default. A sim that calls getUserMedia / geolocation lists the feature
   // in sim.config.json: a locked policy logs a console error per request and fails fuzz.
@@ -205,6 +221,34 @@ function simMetadataHtml(): Plugin {
 }
 
 /**
+ * Write the CSP into the built `index.html` as the first `<head>` element, so the
+ * policy also holds on GitHub Pages, which cannot send response headers. Only the
+ * CSP has a `<meta>` form; Permissions-Policy, COOP/COEP, X-Frame-Options and
+ * X-Content-Type-Options stay dev/preview-only. Skipped for `--mode single`: that
+ * file is opened from disk or pasted into an LMS, where 'self' matches nothing.
+ */
+function cspMetaTag(): Plugin {
+  const content = cspDirectives
+    .filter((directive) => !HEADER_ONLY_CSP_DIRECTIVES.has(directive.split(" ")[0] ?? ""))
+    .join("; ");
+  return {
+    name: "csp-meta-tag",
+    apply: "build",
+    // Right after <meta charset> (which must stay within the first 1024 bytes) and
+    // before any element that loads a resource, since a meta CSP only governs what follows it.
+    transformIndexHtml: (html: string): string => {
+      const tag = `<meta http-equiv="Content-Security-Policy" content="${content.replace(/"/g, "&quot;")}" />`;
+      const anchor = /<meta\s+charset=[^>]*>/i.exec(html) ?? /<head[^>]*>/i.exec(html);
+      if (anchor === null) {
+        throw new Error("csp-meta-tag: index.html has no <head> to put the CSP in");
+      }
+      const end = anchor.index + anchor[0].length;
+      return `${html.slice(0, end)}\n    ${tag}${html.slice(end)}`;
+    },
+  };
+}
+
+/**
  * Dependency-free single-file plugin. After the bundle is generated, splice every
  * JS chunk and CSS asset that `index.html` references directly into the HTML as
  * inline tags, drop those now-orphaned files, and strip external icon links so the
@@ -245,7 +289,7 @@ function inlineSingleFile(): Plugin {
 }
 
 /** Plugins defined in this file: their warnings are project warnings. */
-const OWN_PLUGIN_NAMES: ReadonlySet<string> = new Set(["sim-metadata-html", "inline-single-file"]);
+const OWN_PLUGIN_NAMES: ReadonlySet<string> = new Set(["sim-metadata-html", "csp-meta-tag", "inline-single-file"]);
 
 /**
  * Turn bundler warnings about project code into build errors. No sim emits any
@@ -305,6 +349,7 @@ export default defineConfig(({ mode }) => {
       ? [simMetadataHtml(), inlineSingleFile()]
       : [
           simMetadataHtml(),
+          cspMetaTag(),
           VitePWA({
             registerType: "autoUpdate",
             includeAssets: ["favicon.ico", "icons/apple-touch-icon.png"],
