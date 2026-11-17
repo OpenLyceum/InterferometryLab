@@ -4,32 +4,33 @@
  * Not part of Fleet Health's fuzz smoke. Run explicitly:
  *   npm run test:soak
  *
- * Warm up the sim, click Reset All repeatedly with GC between rounds, and assert
+ * Warm up the first sim screen, activate Reset All with GC between rounds, and assert
  * JS heap growth stays bounded. Catches retained listeners / nodes that unit
  * WeakRef suites miss when objects are intentionally long-lived.
  *
  * Requires Chromium flags: --js-flags=--expose-gc and --enable-precise-memory-info
- * (set on this describe only so fuzz stays unchanged).
+ * (set at file scope so fuzz stays unchanged).
  */
 
+import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 
 const SOAK_ROUNDS: number = Math.max(5, parseInt(process.env["SOAK_ROUNDS"] || "15", 10) || 15);
 /** Allow modest heap noise from caches / JIT; fail on clear linear growth. */
 const MAX_GROWTH_RATIO: number = parseFloat(process.env["SOAK_MAX_GROWTH"] || "1.75") || 1.75;
 
-test.describe("Memory soak", () => {
-  test.use({
-    launchOptions: {
-      args: [
-        "--js-flags=--expose-gc",
-        "--enable-precise-memory-info",
-        "--enable-unsafe-webgpu",
-        "--enable-features=Vulkan",
-      ],
-    },
-  });
+test.use({
+  launchOptions: {
+    args: [
+      "--js-flags=--expose-gc",
+      "--enable-precise-memory-info",
+      "--enable-unsafe-webgpu",
+      "--enable-features=Vulkan",
+    ],
+  },
+});
 
+test.describe("Memory soak", () => {
   test(`Reset All × ${SOAK_ROUNDS} keeps JS heap growth bounded`, async ({ page }) => {
     test.setTimeout(180_000);
 
@@ -43,7 +44,7 @@ test.describe("Memory soak", () => {
       }
     });
 
-    await page.goto("/?ea");
+    await page.goto("/?ea&homeScreen=false");
     await page.waitForSelector("#sim", { timeout: 30_000 });
 
     // Warm-up: one reset + GC so first metrics are not cold-start dominated.
@@ -59,6 +60,12 @@ test.describe("Memory soak", () => {
 
     const after = await heapUsed(page);
     const ratio = after / baseline;
+    const metricsPath = test.info().outputPath("heap-metrics.json");
+    await writeFile(metricsPath, JSON.stringify({ baseline, after, ratio, rounds: SOAK_ROUNDS }));
+    await test.info().attach("heap-metrics", {
+      path: metricsPath,
+      contentType: "application/json",
+    });
     expect(
       ratio,
       `JS heap grew ${ratio.toFixed(2)}× after ${SOAK_ROUNDS} resets (baseline=${baseline}, after=${after})`,
@@ -69,26 +76,20 @@ test.describe("Memory soak", () => {
 });
 
 async function clickResetAll(page: import("@playwright/test").Page): Promise<void> {
-  // scenery-phet ResetAllButton exposes an accessible name; fall back to common labels.
-  const reset = page.getByRole("button", { name: /reset all/i });
-  if ((await reset.count()) > 0) {
-    await reset.first().click({ timeout: 5_000 });
-    return;
-  }
-  const alt = page.getByRole("button", { name: /^reset$/i });
-  if ((await alt.count()) > 0) {
-    await alt.first().click({ timeout: 5_000 });
-    return;
-  }
-  // Sims without a discoverable Reset All still exercise the session via reload-free noop;
-  // the heap check then mainly guards against pageerror / console leaks during idle.
+  // Activate the accessible button with the keyboard; the canvas covers the PDOM.
+  const reset = page.getByRole("button", { name: /^(reset all|reset simulation|reset)$/i }).first();
+  await expect(reset, "Reset button must be available; idle is not a reset soak").toBeVisible({ timeout: 30_000 });
+  await reset.press("Space", { timeout: 5_000 });
 }
 
 async function forceBrowserGC(page: import("@playwright/test").Page): Promise<void> {
   await page.evaluate(async () => {
     const gc = (globalThis as unknown as { gc?: () => void }).gc;
+    if (!gc) {
+      throw new Error("Browser GC unavailable (need --js-flags=--expose-gc)");
+    }
     for (let i = 0; i < 5; i++) {
-      gc?.();
+      gc();
       await new Promise<void>((r) => setTimeout(r, 20));
     }
   });
