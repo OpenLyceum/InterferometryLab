@@ -2,8 +2,90 @@ import type { Plugin, Rolldown } from "vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import packageJson from "./package.json" with { type: "json" };
+import simConfigJson from "./sim.config.json" with { type: "json" };
 
 const { description, name }: { description: string; name: string } = packageJson;
+
+/**
+ * Template-owned: this file must stay identical across the fleet (Baton
+ * check-template-drift). Everything a sim may legitimately vary lives in
+ * `sim.config.json`, validated below. Anything else needs a carve-out in the
+ * sim's AGENTS.md, not an edit here.
+ */
+type SimConfig = {
+  /** PWA `name` and screenshot labels, e.g. "Doppler Effect". */
+  title: string;
+  /** PWA `short_name` (home-screen label): 30 characters max; launchers truncate past ~12. */
+  shortName: string;
+  themeColor: string;
+  backgroundColor: string;
+  /** Browser features the sim calls; each becomes `<feature>=(self)` in Permissions-Policy. */
+  allowPermissions: PermissionFeature[];
+  /** Extra https:// origins the sim fetches from at runtime, appended to CSP connect-src. */
+  connectSrc: string[];
+  /** Extra file extensions (no dot) for the Workbox precache, e.g. bundled audio. */
+  precacheExtensions: string[];
+};
+
+const PERMISSION_FEATURES = ["camera", "microphone", "geolocation"] as const;
+type PermissionFeature = (typeof PERMISSION_FEATURES)[number];
+
+const SIM_CONFIG_KEYS: ReadonlySet<string> = new Set([
+  "$comment",
+  "title",
+  "shortName",
+  "themeColor",
+  "backgroundColor",
+  "allowPermissions",
+  "connectSrc",
+  "precacheExtensions",
+]);
+
+/** Validate `sim.config.json` strictly so a typo or an invented key fails the build instead of being ignored. */
+function parseSimConfig(raw: Record<string, unknown>): SimConfig {
+  const problems: string[] = [];
+  for (const key of Object.keys(raw)) {
+    if (!SIM_CONFIG_KEYS.has(key)) {
+      problems.push(`unknown key "${key}"`);
+    }
+  }
+  const text = (key: string, pattern: RegExp, hint: string): string => {
+    const value = raw[key];
+    if (typeof value !== "string" || !pattern.test(value)) {
+      problems.push(`"${key}" must be ${hint}`);
+      return "";
+    }
+    return value;
+  };
+  const list = (key: string, pattern: RegExp, hint: string): string[] => {
+    const value = raw[key];
+    if (!Array.isArray(value) || value.some((item) => typeof item !== "string" || !pattern.test(item))) {
+      problems.push(`"${key}" must be an array of ${hint}`);
+      return [];
+    }
+    return value as string[];
+  };
+  const hexColor = /^#[0-9a-f]{6}$/i;
+  const config: SimConfig = {
+    title: text("title", /^\S.{0,59}$/, "a non-empty display name (60 characters max)"),
+    shortName: text("shortName", /^\S.{0,29}$/, "a non-empty label (30 characters max)"),
+    themeColor: text("themeColor", hexColor, "a #rrggbb color"),
+    backgroundColor: text("backgroundColor", hexColor, "a #rrggbb color"),
+    allowPermissions: list(
+      "allowPermissions",
+      new RegExp(`^(?:${PERMISSION_FEATURES.join("|")})$`),
+      PERMISSION_FEATURES.join(" | "),
+    ) as PermissionFeature[],
+    connectSrc: list("connectSrc", /^https:\/\/[a-z0-9.-]+(?::\d+)?$/, "bare https:// origins (no path, no wildcard)"),
+    precacheExtensions: list("precacheExtensions", /^[a-z0-9]{1,8}$/, "lowercase extensions without a dot"),
+  };
+  if (problems.length > 0) {
+    throw new Error(`sim.config.json is invalid:\n  - ${problems.join("\n  - ")}`);
+  }
+  return config;
+}
+
+const simConfig: SimConfig = parseSimConfig(simConfigJson);
 
 /**
  * Security headers required for:
@@ -41,14 +123,19 @@ const securityHeaders: Record<string, string> = {
     "img-src 'self' data:",
     "media-src 'self' blob:",
     // blob: for fetch inside workers
-    "connect-src 'self' blob:",
+    // plus any runtime data origins the sim declares in sim.config.json
+    ["connect-src 'self' blob:", ...simConfig.connectSrc].join(" "),
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'none'",
   ].join("; "),
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  // Locked by default. A sim that calls getUserMedia / geolocation lists the feature
+  // in sim.config.json: a locked policy logs a console error per request and fails fuzz.
+  "Permissions-Policy": PERMISSION_FEATURES.map(
+    (feature) => `${feature}=(${simConfig.allowPermissions.includes(feature) ? "self" : ""})`,
+  ).join(", "),
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
 };
@@ -157,6 +244,29 @@ function inlineSingleFile(): Plugin {
   };
 }
 
+/** Plugins defined in this file: their warnings are project warnings. */
+const OWN_PLUGIN_NAMES: ReadonlySet<string> = new Set(["sim-metadata-html", "inline-single-file"]);
+
+/**
+ * Turn bundler warnings about project code into build errors. No sim emits any
+ * today, so a new one (direct `eval`, an import that resolves to `undefined`, a
+ * misplaced `#__PURE__`) is a regression, not noise. Warnings from dependencies
+ * stay warnings so an upstream bump cannot break every sim's CI at once.
+ */
+function onBundlerLog(level: Rolldown.LogLevel, log: Rolldown.RolldownLog, handler: Rolldown.LogOrStringHandler): void {
+  const ids = [log.id, ...(log.ids ?? [])].filter((id): id is string => typeof id === "string");
+  // A log with no module id but a third-party plugin name (e.g. vite-plugin-pwa) is a dependency's too.
+  const fromDependency =
+    ids.length > 0
+      ? ids.every((id) => id.includes("/node_modules/"))
+      : log.plugin !== undefined && !OWN_PLUGIN_NAMES.has(log.plugin);
+  if (level === "warn" && !fromDependency) {
+    // `handler("error", log)` only reprints under Vite; throwing is what stops the build.
+    throw new Error(`${log.message} (fails the build: fleet bundles are warning-free)`);
+  }
+  handler(level, log);
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   // `vite build --mode single` produces a single self-contained dist/index.html.
@@ -170,6 +280,7 @@ export default defineConfig(({ mode }) => {
       target: "es2025",
       // SceneryStack bundles exceed Vite's default 500 kB chunk warning.
       chunkSizeWarningLimit: 5000,
+      rolldownOptions: { onLog: onBundlerLog },
       ...(single && {
         // Inline every imported asset as a base64 data URI instead of emitting files.
         assetsInlineLimit: INLINE_LIMIT_BYTES,
@@ -178,6 +289,7 @@ export default defineConfig(({ mode }) => {
         // Skip copying public/ (favicon, icons) — nothing external should remain.
         copyPublicDir: false,
         rolldownOptions: {
+          onLog: onBundlerLog,
           // Collapse dynamic imports into the single entry chunk.
           output: { codeSplitting: false },
         },
@@ -198,15 +310,15 @@ export default defineConfig(({ mode }) => {
             includeAssets: ["favicon.ico", "icons/apple-touch-icon.png"],
             manifest: {
               id: name,
-              name: "Interferometry Lab",
+              name: simConfig.title,
               // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              short_name: "InterferometryLab",
+              short_name: simConfig.shortName,
               description,
               categories: ["education", "science"],
               // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              theme_color: "#1a1a2e",
+              theme_color: simConfig.themeColor,
               // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              background_color: "#000000",
+              background_color: simConfig.backgroundColor,
               display: "standalone",
               // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
               display_override: ["window-controls-overlay", "standalone"],
@@ -237,7 +349,7 @@ export default defineConfig(({ mode }) => {
                   type: "image/png",
                   // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
                   form_factor: "wide",
-                  label: "Interferometry Lab",
+                  label: simConfig.title,
                 },
                 {
                   src: "screenshots/narrow.png",
@@ -245,13 +357,15 @@ export default defineConfig(({ mode }) => {
                   type: "image/png",
                   // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
                   form_factor: "narrow",
-                  label: "Interferometry Lab",
+                  label: simConfig.title,
                 },
               ],
             },
             workbox: {
               maximumFileSizeToCacheInBytes: WORKBOX_MAX_FILE_BYTES,
-              globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
+              globPatterns: [
+                `**/*.{${["js", "css", "html", "svg", "png", "woff2", ...simConfig.precacheExtensions].join(",")}}`,
+              ],
             },
           }),
         ],

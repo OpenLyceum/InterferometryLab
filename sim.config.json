@@ -1,0 +1,10 @@
+{
+  "$comment": "Per-sim build settings, read and validated by vite.config.ts (template-owned). Unknown keys or bad values fail the build. See AGENTS.md → Build configuration.",
+  "title": "Interferometry Lab",
+  "shortName": "InterferometryLab",
+  "themeColor": "#1a1a2e",
+  "backgroundColor": "#000000",
+  "allowPermissions": [],
+  "connectSrc": [],
+  "precacheExtensions": []
+}

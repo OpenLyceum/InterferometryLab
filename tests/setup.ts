@@ -10,6 +10,8 @@
  * record a sim-specific variant under AGENTS.md → "Compliance carve-outs".
  */
 
+import { afterEach, beforeEach } from "vitest";
+
 // ── shared no-op helpers ─────────────────────────────────────────────────────
 const noop: () => void = () => {
   /* no-op */
@@ -184,8 +186,8 @@ HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, cont
 
 // ── SceneryStack init ────────────────────────────────────────────────────────
 // Dynamic import on purpose: a static `import` is hoisted and would load
-// scenerystack/init before the mocks above are installed. (`export {}` below keeps
-// this file an ES module, which top-level await requires.)
+// scenerystack/init before the mocks above are installed. (The `vitest` import at the
+// top keeps this file an ES module, which top-level await requires.)
 const { init, madeWithSceneryStackSplashDataURI } = await import("scenerystack/init");
 
 init({
@@ -200,4 +202,30 @@ init({
   colorProfiles: ["default"],
 });
 
-export {};
+// ── console guard ────────────────────────────────────────────────────────────
+// Any console.error / console.warn during a test fails that test: SceneryStack
+// reports assertion-style problems (bad option, leaked listener, NaN layout) via
+// the console, and the fuzz suite already fails on them in the browser. A test
+// that expects a warning silences it explicitly:
+//   vi.spyOn(console, "warn").mockImplementation(() => undefined);
+// (restoreMocks in vitest.config.ts undoes the spy after the test). Calls are
+// recorded and reported in afterEach rather than thrown on the spot, so library
+// code that catches errors cannot swallow the failure.
+const consoleProblems: string[] = [];
+for (const level of ["error", "warn"] as const) {
+  // biome-ignore lint/suspicious/noConsole: the guard wraps console on purpose
+  const original = console[level].bind(console);
+  console[level] = (...args: unknown[]): void => {
+    consoleProblems.push(`console.${level}: ${args.map((arg) => String(arg)).join(" ")}`);
+    original(...args);
+  };
+}
+beforeEach(() => {
+  consoleProblems.length = 0;
+});
+afterEach(() => {
+  if (consoleProblems.length > 0) {
+    const report = consoleProblems.splice(0).join("\n  ");
+    throw new Error(`Unexpected console output during the test (silence it explicitly if intended):\n  ${report}`);
+  }
+});
