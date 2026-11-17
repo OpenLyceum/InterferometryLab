@@ -408,6 +408,9 @@ export default defineConfig(({ mode }) => {
             },
             workbox: {
               maximumFileSizeToCacheInBytes: WORKBOX_MAX_FILE_BYTES,
+              // Lets <Pages URL>/<Repo>-single.html (the build:single file Baton's deploy.yml adds
+              // after this build) reach returning visitors instead of the fallback index.html.
+              navigateFallbackDenylist: [/-single\.html$/],
               globPatterns: [
                 `**/*.{${["js", "css", "html", "svg", "png", "woff2", ...simConfig.precacheExtensions].join(",")}}`,
               ],
