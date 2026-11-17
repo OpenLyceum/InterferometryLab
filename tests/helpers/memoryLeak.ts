@@ -3,7 +3,7 @@
  *
  * A sim's tests/memory-leak.test.ts lists its disposable objects and calls
  * describeDisposalLeaks(); sim-specific leak tests can follow in the same file using
- * forceGC() directly.
+ * forceGC(), expectNoListenerGrowth(), and keepAlive sentinels.
  *
  * Each case is created inside a function boundary, disposed, and checked via WeakRef
  * after forced garbage collection (--expose-gc in vitest.config.ts). V8 requires a
@@ -27,7 +27,26 @@ export type DisposalCase = {
    * throw; set this for objects that promise idempotent disposal.
    */
   readonly idempotentDispose?: boolean;
+  /**
+   * Long-lived objects that must stay reachable while the disposed instance is checked
+   * for collection (e.g. model Properties or color Properties the node linked to).
+   * Proves dispose() unlinked from state that outlives the instance. The harness holds
+   * strong references to the returned objects until after the WeakRef assertion.
+   */
+  readonly keepAlive?: () => readonly object[];
 };
+
+/**
+ * Options for describeDisposalLeaks. When `cases` is empty, `emptyOk` is required: a
+ * short rationale naming the custom forceGC / expectNoListenerGrowth coverage below
+ * (or why the sim has no disposables). Compliance and the suite both enforce this.
+ */
+export type DescribeDisposalLeaksOptions = {
+  readonly emptyOk?: string;
+};
+
+/** Runtime shape of axon Property listener bookkeeping (private in the .d.ts). */
+type HasListenerCount = { getListenerCount(): number };
 
 /**
  * Force garbage collection with multiple passes, returning as soon as every given
@@ -61,11 +80,43 @@ export function createAndDispose(create: () => DisposableObject): WeakRef<object
 }
 
 /**
+ * axon Property listener count (public at runtime, private in the type declarations).
+ * Prefer this over casting at each call site.
+ *
+ * @public
+ */
+export function listenerCount(property: object): number {
+  return (property as HasListenerCount).getListenerCount();
+}
+
+/**
+ * Run `exercise` several times and assert that none of the given Properties gained
+ * listeners. Catches "forgot to unlink" even when the owner is intentionally
+ * non-disposable (`isDisposable: false`) or GC is inconclusive.
+ *
+ * @public
+ */
+export async function expectNoListenerGrowth(
+  properties: readonly object[],
+  exercise: () => void | Promise<void>,
+  options?: { readonly rounds?: number; readonly label?: string },
+): Promise<void> {
+  const rounds = options?.rounds ?? 5;
+  const label = options?.label ?? "listener counts must not grow";
+  const before = properties.map(listenerCount);
+  for (let i = 0; i < rounds; i++) {
+    await exercise();
+  }
+  expect(properties.map(listenerCount), label).toEqual(before);
+}
+
+/**
  * The standard suite: gc is exposed, a plain object is collected, and for each case
  * the instance is collected after dispose() and repeated create/dispose cycles leave no
  * survivors (plus, with idempotentDispose, a second dispose() does not throw).
+ * With keepAlive, the sentinels stay strongly referenced through the collection check.
  */
-export function describeDisposalLeaks(cases: readonly DisposalCase[]): void {
+export function describeDisposalLeaks(cases: readonly DisposalCase[], options?: DescribeDisposalLeaksOptions): void {
   describe("Memory leak regression", () => {
     it("global.gc is available (--expose-gc)", () => {
       expect(globalThis.gc).toBeDefined();
@@ -77,11 +128,24 @@ export function describeDisposalLeaks(cases: readonly DisposalCase[]): void {
       expect(ref.deref()).toBeUndefined();
     });
 
-    for (const { name, create, idempotentDispose = false } of cases) {
+    if (cases.length === 0) {
+      it("empty case list documents why (emptyOk)", () => {
+        expect(
+          options?.emptyOk,
+          "describeDisposalLeaks([]) requires emptyOk naming the custom coverage below",
+        ).toBeTruthy();
+        expect(options!.emptyOk!.trim().length, "emptyOk must be a non-trivial rationale").toBeGreaterThan(10);
+      });
+    }
+
+    for (const { name, create, idempotentDispose = false, keepAlive } of cases) {
       it(`${name} is collected after dispose`, async () => {
+        const sentinels = keepAlive?.() ?? [];
         const ref = createAndDispose(create);
         await forceGC(ref);
-        expect(ref.deref()).toBeUndefined();
+        expect(ref.deref(), `${name} was retained after dispose`).toBeUndefined();
+        // Keep sentinels alive through the assertion so a leak against them can fail.
+        expect(sentinels.length).toBeGreaterThanOrEqual(0);
       });
 
       if (idempotentDispose) {
@@ -93,12 +157,17 @@ export function describeDisposalLeaks(cases: readonly DisposalCase[]): void {
       }
 
       it(`${name}: repeated create/dispose cycles leave no survivors`, async () => {
+        const sentinels = keepAlive?.() ?? [];
         const refs: WeakRef<object>[] = [];
         for (let i = 0; i < 10; i++) {
           refs.push(createAndDispose(create));
         }
         await forceGC(refs);
-        expect(refs.filter((r) => r.deref() !== undefined).length).toBe(0);
+        expect(
+          refs.filter((r) => r.deref() !== undefined).length,
+          `${name} left survivors after repeated dispose`,
+        ).toBe(0);
+        expect(sentinels.length).toBeGreaterThanOrEqual(0);
       });
     }
   });

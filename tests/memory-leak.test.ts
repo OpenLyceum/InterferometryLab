@@ -14,10 +14,12 @@
  */
 
 import { NumberProperty, Property, type ReadOnlyProperty } from "scenerystack/axon";
+import { Vector2 } from "scenerystack/dot";
 import { Color } from "scenerystack/scenery";
 import { describe, expect, it } from "vitest";
 import type { FringeSpec } from "../src/common/model/FringeSpec.js";
 import { TimeModel } from "../src/common/TimeModel.js";
+import { BeamPathNode } from "../src/common/view/BeamPathNode.js";
 import { FringePatternNode } from "../src/common/view/FringePatternNode.js";
 import { IntensityProfileNode } from "../src/common/view/IntensityProfileNode.js";
 import { FabryPerotModel } from "../src/fabry-perot/model/FabryPerotModel.js";
@@ -27,6 +29,10 @@ import { PhotonMarksNode } from "../src/mach-zehnder/view/PhotonMarksNode.js";
 import { MichelsonModel } from "../src/michelson/model/MichelsonModel.js";
 import { CoherenceEnvelopeNode } from "../src/michelson/view/CoherenceEnvelopeNode.js";
 import { describeDisposalLeaks, forceGC } from "./helpers/memoryLeak.js";
+
+// Outlive BeamPathNode the way wavelength-derived colour/intensity outlive a beam stroke.
+const beamColorProperty = new Property(new Color("#ff5252"));
+const beamIntensityProperty = new NumberProperty(1);
 
 function createAndDisposeTimeModel(): WeakRef<object> {
   const model = new TimeModel();
@@ -207,4 +213,14 @@ describe("Memory leak regression", () => {
   });
 });
 
-describeDisposalLeaks([{ name: "TimeModel", create: () => new TimeModel(), idempotentDispose: true }]);
+describeDisposalLeaks([
+  { name: "TimeModel", create: () => new TimeModel(), idempotentDispose: true },
+  {
+    name: "BeamPathNode",
+    create: () =>
+      new BeamPathNode([new Vector2(0, 0), new Vector2(40, 0)], beamColorProperty, {
+        intensityProperty: beamIntensityProperty,
+      }),
+    keepAlive: () => [beamColorProperty, beamIntensityProperty],
+  },
+]);
