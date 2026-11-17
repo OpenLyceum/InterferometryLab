@@ -95,6 +95,14 @@ async function forceBrowserGC(page: import("@playwright/test").Page): Promise<vo
 }
 
 async function heapUsed(page: import("@playwright/test").Page): Promise<number> {
-  const metrics = await page.metrics();
-  return metrics.JSHeapUsedSize;
+  // page.metrics() is not in current Playwright typings; precise memory info is
+  // enabled via launch args above and exposed on performance.memory in Chromium.
+  const used = await page.evaluate(() => {
+    const memory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+    return memory?.usedJSHeapSize ?? 0;
+  });
+  if (used <= 0) {
+    throw new Error("performance.memory.usedJSHeapSize unavailable (need --enable-precise-memory-info)");
+  }
+  return used;
 }
