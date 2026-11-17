@@ -187,8 +187,12 @@ function inlineAsset(html: string, fileName: string, item: Rolldown.OutputChunk 
     if (!scriptTag.test(html)) {
       return null;
     }
+    // With codeSplitting off, Vite never fills the `__VITE_PRELOAD__` deps placeholder
+    // it puts in each dynamic `import()` wrapper, so the first lazy import throws a
+    // ReferenceError (ColliderLab, MolScope). One chunk has nothing to preload, and the
+    // helper skips preloading when its deps argument is undefined.
     // Escape `</script>` so an inlined occurrence cannot close the tag early.
-    const code = item.code.replace(/<\/script>/g, "<\\/script>");
+    const code = item.code.replaceAll("__VITE_PRELOAD__", "void 0").replace(/<\/script>/g, "<\\/script>");
     return html.replace(scriptTag, () => `<script type="module">${code}</script>`);
   }
 
