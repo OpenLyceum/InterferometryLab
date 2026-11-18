@@ -244,8 +244,10 @@ export class IntensityProfileNode extends VBox {
   }
 
   public override dispose(): void {
-    super.dispose();
+    // Stop redrawing before the chart is torn down. The description stays until after
+    // super.dispose(), which unlinks it as this node's accessibleParagraph.
     this.multilink.dispose();
+    super.dispose();
     this.description.dispose();
   }
 }
