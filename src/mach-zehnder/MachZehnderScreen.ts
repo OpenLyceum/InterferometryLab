@@ -41,7 +41,7 @@ export class MachZehnderScreen extends Screen<MachZehnderModel, MachZehnderScree
       optionize<MachZehnderScreenOptions, EmptySelfOptions, ScreenOptions>()(
         {
           backgroundColorProperty: InterferometryLabColors.backgroundColorProperty,
-          createKeyboardHelpNode: () => new InterferometryLabKeyboardHelpContent(),
+          createKeyboardHelpNode: () => new InterferometryLabKeyboardHelpContent({ includeTimeControls: true }),
           homeScreenIcon: createMachZehnderIcon(),
           navigationBarIcon: createMachZehnderIcon(),
         },

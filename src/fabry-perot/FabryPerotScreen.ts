@@ -41,7 +41,7 @@ export class FabryPerotScreen extends Screen<FabryPerotModel, FabryPerotScreenVi
       optionize<FabryPerotScreenOptions, EmptySelfOptions, ScreenOptions>()(
         {
           backgroundColorProperty: InterferometryLabColors.backgroundColorProperty,
-          createKeyboardHelpNode: () => new InterferometryLabKeyboardHelpContent(),
+          createKeyboardHelpNode: () => new InterferometryLabKeyboardHelpContent({ includeTimeControls: true }),
           homeScreenIcon: createFabryPerotIcon(),
           navigationBarIcon: createFabryPerotIcon(),
         },
