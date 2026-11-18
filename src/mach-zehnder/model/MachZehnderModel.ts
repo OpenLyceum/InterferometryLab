@@ -132,7 +132,7 @@ export class MachZehnderModel implements TModel {
    * stepping a frame at a time, is what turns the accumulation into something
    * that can be examined while it is still sparse.
    */
-  public readonly timer = new TimeModel(true);
+  public readonly timer = new TimeModel({ initiallyPlaying: true });
 
   /** Optical path added by the sample slide, nm. */
   public readonly samplePathProperty: TReadOnlyProperty<number>;
