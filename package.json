@@ -47,8 +47,8 @@
     "scenerystack": "^3.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.7",
-    "@playwright/test": "^1.65.0",
+    "@biomejs/biome": "^2.6.8",
+    "@playwright/test": "^1.65.1",
     "@swc/core": "^1.15.3",
     "@types/node": "^26.6.6",
     "dependency-cruiser": "^18.7.2",
