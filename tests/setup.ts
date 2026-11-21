@@ -190,16 +190,26 @@ HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, cont
 // top keeps this file an ES module, which top-level await requires.)
 const { init, madeWithSceneryStackSplashDataURI } = await import("scenerystack/init");
 
+// The by-hand headless soak (vitest.soak.config.ts sets SOAK_HEADLESS=1) cycles every locale
+// that has a strings file and the projector profile; unit tests stay on en / default.
+const soak = process.env["SOAK_HEADLESS"] === "1";
+const { readdirSync } = await import("node:fs");
+const soakLocales = soak
+  ? readdirSync(`${process.cwd()}/src/i18n`)
+      .map((file) => /^strings_(.+)\.json$/.exec(file)?.[1])
+      .filter((locale): locale is string => locale !== undefined)
+  : [];
+
 init({
   // Must match the package.json "name" (and the name in src/init.ts).
   name: "interferometry-lab",
   version: "1.0.0-test",
   brand: "made-with-scenerystack",
   locale: "en",
-  availableLocales: ["en"],
+  availableLocales: soak && soakLocales.length > 0 ? soakLocales : ["en"],
   splashDataURI: madeWithSceneryStackSplashDataURI,
-  allowLocaleSwitching: false,
-  colorProfiles: ["default"],
+  allowLocaleSwitching: soak,
+  colorProfiles: soak ? ["default", "projector"] : ["default"],
 });
 
 // ── console guard ────────────────────────────────────────────────────────────
