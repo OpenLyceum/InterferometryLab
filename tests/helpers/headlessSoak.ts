@@ -39,11 +39,12 @@
  */
 
 import { BooleanProperty, NumberProperty, Property, type ReadOnlyProperty, StringProperty } from "scenerystack/axon";
-import { Bounds2, Dimension2 } from "scenerystack/dot";
+import { Bounds2, Dimension2, Vector2 } from "scenerystack/dot";
 import { localeProperty, type TModel } from "scenerystack/joist";
 import { colorProfileProperty, Node, PressListener } from "scenerystack/scenery";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import type { Screen, ScreenView } from "scenerystack/sim";
+import { ComboBox } from "scenerystack/sun";
 import { describe, expect, it } from "vitest";
 import { forceGC } from "./memoryLeak.js";
 
@@ -83,12 +84,20 @@ export type HeadlessSoakOptions = {
   readonly maxHeapGrowthBytes?: number;
 };
 
-type Pressable = { readonly node: Node; readonly listener: PressListener; readonly label: string };
+/** Something a student can activate: a PressListener, or a ComboBox list item. */
+type Pressable = {
+  readonly node: Node;
+  readonly label: string;
+  readonly canPress: () => boolean;
+  readonly press: () => void;
+};
 type ValueControl = {
   readonly node: Node;
   readonly label: string;
   readonly property: { value: number };
   readonly range: { min: number; max: number };
+  /** The control's own constraint (step rounding, integer pickers), as keyboard input applies it. */
+  readonly constrain: (value: number) => number;
 };
 type CountedEmitter = { getListenerCount(): number };
 type Snapshot = { readonly listeners: Map<string, number>; readonly nodes: number; readonly heap: number };
@@ -210,8 +219,8 @@ function buildActions(
     actions.push({
       name: `press "${pressable.label}"`,
       run: () => {
-        if (isShowing(pressable.node, root) && pressable.listener.canClick()) {
-          pressable.listener.click(null);
+        if (isShowing(pressable.node, root) && pressable.canPress()) {
+          pressable.press();
         }
       },
     });
@@ -222,7 +231,8 @@ function buildActions(
         name: `set "${control.label}" to ${pick}`,
         run: () => {
           const { min, max } = control.range;
-          control.property.value = pick === "min" ? min : pick === "max" ? max : min + (max - min) * random();
+          const raw = pick === "min" ? min : pick === "max" ? max : min + (max - min) * random();
+          control.property.value = Math.min(max, Math.max(min, control.constrain(raw)));
         },
       });
     }
@@ -274,7 +284,7 @@ function normalize(screens: readonly AnyScreen[], exclude: RegExp | undefined): 
   for (const screen of screens) {
     activate(screens, screen);
     for (const pressable of findPressables(screen.view, exclude, true)) {
-      pressable.listener.click(null);
+      pressable.press();
     }
     screen.model.step?.(1 / 60);
     screen.view.step?.(1 / 60);
@@ -297,23 +307,101 @@ function findPressables(root: Node, exclude: RegExp | undefined, resetAllOnly = 
   const found: Pressable[] = [];
   walkShowing(root, (node) => {
     if (resetAllOnly && !(node instanceof ResetAllButton)) {
-      return;
+      return true;
     }
     // Reset All runs in normalize(); pressing it mid-round would hide every other leak.
     if (!resetAllOnly && node instanceof ResetAllButton) {
-      return;
+      return false;
     }
     const label = labelOf(node);
     if (!resetAllOnly && (DEFAULT_EXCLUDE.test(label) || exclude?.test(label))) {
-      return;
+      return false;
+    }
+    // Opening a ComboBox list needs a Display; select its items the way the list does instead.
+    if (!resetAllOnly && node instanceof ComboBox) {
+      found.push(...comboBoxItems(node, label));
+      return false;
     }
     for (const listener of node.inputListeners) {
       if (listener instanceof PressListener) {
-        found.push({ node, listener, label });
+        found.push({
+          node,
+          label,
+          canPress: () => listener.canClick(),
+          press: () => listener.click(keyboardClickEvent(node) as Parameters<PressListener["click"]>[0]),
+        });
       }
     }
+    return true;
   });
   return found;
+}
+
+/** Each item of a ComboBox's (hidden) list, selected through the list's own click handler. */
+function comboBoxItems(comboBox: ComboBox<unknown>, label: string): Pressable[] {
+  const listBox = (comboBox as unknown as { listBox?: Node }).listBox;
+  if (!listBox) {
+    return [];
+  }
+  const items: Pressable[] = [];
+  const visit = (node: Node): void => {
+    for (const listener of node.inputListeners as { click?: (event: unknown) => void }[]) {
+      if ((node as unknown as { item?: unknown }).item !== undefined && typeof listener.click === "function") {
+        items.push({
+          node: comboBox,
+          label: `${label} → ${labelOf(node)}`,
+          canPress: () => comboBox.enabled,
+          press: () => listener.click?.(keyboardClickEvent(node)),
+        });
+        break; // one selection per item, whichever of its listeners handles click first
+      }
+    }
+    node.children.forEach(visit);
+  };
+  visit(listBox);
+  return items;
+}
+
+/**
+ * A minimal stand-in for the SceneryEvent a keyboard or assistive-device click delivers:
+ * listeners read currentTarget, the pointer's point, and call handle() / abort().
+ */
+function keyboardClickEvent(node: Node): unknown {
+  let point = Vector2.ZERO;
+  try {
+    const bounds = node.localBounds;
+    if (bounds.isFinite()) {
+      point = node.localToGlobalPoint(bounds.center);
+    }
+  } catch {
+    // Node with several parents or no bounds: the origin is as good as any.
+  }
+  const pointer = {
+    point,
+    type: "pdom",
+    isDown: false,
+    attachedListener: null,
+    isTouchLike: () => false,
+    isAttached: () => false,
+    addInputListener: () => undefined,
+    removeInputListener: () => undefined,
+    reserveForDrag: () => undefined,
+    reserveForKeyboardDrag: () => undefined,
+  };
+  return {
+    type: "click",
+    pointer,
+    target: node,
+    currentTarget: node,
+    trail: null,
+    domEvent: null,
+    handled: false,
+    aborted: false,
+    handle: () => undefined,
+    abort: () => undefined,
+    isFromPDOM: () => true,
+    canStartPress: () => true,
+  };
 }
 
 /** Sliders, NumberControls and spinners: anything built on AccessibleValueHandler. */
@@ -321,32 +409,42 @@ function findValueControls(root: Node, exclude: RegExp | undefined): ValueContro
   const found: ValueControl[] = [];
   walkShowing(root, (node) => {
     const handler = node as unknown as {
-      _valueProperty?: { value: unknown };
+      _valueProperty?: { value: unknown; numberType?: string };
       _enabledRangeProperty?: { value: { min: number; max: number } };
+      _constrainValue?: (value: number) => number;
     };
     const property = handler._valueProperty;
     const range = handler._enabledRangeProperty?.value;
     const label = labelOf(node);
     if (!(property && range) || typeof property.value !== "number" || exclude?.test(label)) {
-      return;
+      return true;
     }
     if (!(Number.isFinite(range.min) && Number.isFinite(range.max))) {
-      return;
+      return true;
     }
-    found.push({ node, label, property: property as { value: number }, range });
+    const constrainValue = handler._constrainValue;
+    const integer = property.numberType === "Integer";
+    const constrain = (value: number): number => {
+      const constrained = constrainValue ? constrainValue(value) : value;
+      return integer ? Math.round(constrained) : constrained;
+    };
+    found.push({ node, label, property: property as { value: number }, range, constrain });
+    return true;
   });
   return found;
 }
 
-/** Depth-first over children that a student could see and reach. */
-function walkShowing(root: Node, visit: (node: Node) => void): void {
+/** Depth-first over children a student could see and reach; `visit` returns false to skip a subtree. */
+function walkShowing(root: Node, visit: (node: Node) => boolean): void {
   const seen = new Set<Node>();
   const recurse = (node: Node): void => {
     if (seen.has(node) || !node.visible || !node.inputEnabled || node.pickable === false) {
       return;
     }
     seen.add(node);
-    visit(node);
+    if (!visit(node)) {
+      return;
+    }
     for (const child of node.children) {
       recurse(child);
     }
@@ -465,7 +563,9 @@ function setValidValue(property: ReadOnlyProperty<unknown>, random: () => number
   } else if (typeof property.value === "boolean") {
     settable.value = !property.value;
   } else if (range) {
-    settable.value = range.min + (range.max - range.min) * random();
+    const value = range.min + (range.max - range.min) * random();
+    const integer = (property as unknown as { numberType?: string }).numberType === "Integer";
+    settable.value = integer ? Math.round(value) : value;
   }
 }
 

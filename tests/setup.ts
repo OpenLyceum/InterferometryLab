@@ -98,41 +98,114 @@ function createMockContext2D(): CanvasRenderingContext2D {
 }
 
 // ── Web Audio mock ───────────────────────────────────────────────────────────
+/** An AudioParam that accepts every scheduling call. */
+function mockParam(value: number): AudioParam {
+  return {
+    value,
+    defaultValue: value,
+    setValueAtTime: noop,
+    linearRampToValueAtTime: noop,
+    exponentialRampToValueAtTime: noop,
+    setTargetAtTime: noop,
+    setValueCurveAtTime: noop,
+    cancelScheduledValues: noop,
+    cancelAndHoldAtTime: noop,
+  } as unknown as AudioParam;
+}
+
+/** An AudioNode with connect / disconnect plus the given fields. */
+function mockNode<T>(fields: Record<string, unknown> = {}): T {
+  return { connect: noop, disconnect: noop, addEventListener: noop, removeEventListener: noop, ...fields } as T;
+}
+
+function mockBuffer(channels: number, length: number, sampleRate: number): AudioBuffer {
+  const data = Array.from({ length: Math.max(1, channels) }, () => new Float32Array(length));
+  return {
+    length,
+    duration: length / sampleRate,
+    sampleRate,
+    numberOfChannels: data.length,
+    getChannelData: (channel: number) => data[channel] ?? new Float32Array(length),
+    copyToChannel: noop,
+    copyFromChannel: noop,
+  } as unknown as AudioBuffer;
+}
+
 class MockAudioContext {
   readonly sampleRate = 44100;
   readonly state: AudioContextState = "running";
-  readonly destination = {} as AudioDestinationNode;
+  readonly currentTime = 0;
+  readonly destination = mockNode<AudioDestinationNode>({ maxChannelCount: 2 });
+  readonly listener = {} as AudioListener;
   createGain(): GainNode {
-    return {
-      gain: { value: 1, setValueAtTime: noop, linearRampToValueAtTime: noop },
-      connect: noop,
-      disconnect: noop,
-    } as unknown as GainNode;
+    return mockNode<GainNode>({ gain: mockParam(1) });
+  }
+  createBuffer(channels: number, length: number, sampleRate: number): AudioBuffer {
+    return mockBuffer(channels, length, sampleRate);
   }
   createBufferSource(): AudioBufferSourceNode {
-    return {
+    return mockNode<AudioBufferSourceNode>({
       buffer: null,
-      connect: noop,
-      disconnect: noop,
+      loop: false,
       start: noop,
       stop: noop,
-      playbackRate: { value: 1 },
-    } as unknown as AudioBufferSourceNode;
+      onended: null,
+      playbackRate: mockParam(1),
+      detune: mockParam(0),
+    });
   }
   createOscillator(): OscillatorNode {
-    return { connect: noop, start: noop, stop: noop, frequency: { value: 440 } } as unknown as OscillatorNode;
+    return mockNode<OscillatorNode>({
+      type: "sine",
+      start: noop,
+      stop: noop,
+      setPeriodicWave: noop,
+      frequency: mockParam(440),
+      detune: mockParam(0),
+    });
+  }
+  createPeriodicWave(): PeriodicWave {
+    return {} as PeriodicWave;
+  }
+  createBiquadFilter(): BiquadFilterNode {
+    return mockNode<BiquadFilterNode>({
+      type: "lowpass",
+      frequency: mockParam(350),
+      Q: mockParam(1),
+      gain: mockParam(0),
+      detune: mockParam(0),
+    });
+  }
+  createStereoPanner(): StereoPannerNode {
+    return mockNode<StereoPannerNode>({ pan: mockParam(0) });
+  }
+  createDelay(): DelayNode {
+    return mockNode<DelayNode>({ delayTime: mockParam(0) });
+  }
+  createConvolver(): ConvolverNode {
+    return mockNode<ConvolverNode>({ buffer: null, normalize: true });
+  }
+  createAnalyser(): AnalyserNode {
+    return mockNode<AnalyserNode>({
+      fftSize: 2048,
+      frequencyBinCount: 1024,
+      getFloatFrequencyData: noop,
+      getByteFrequencyData: noop,
+      getFloatTimeDomainData: noop,
+      getByteTimeDomainData: noop,
+    });
   }
   createDynamicsCompressor(): DynamicsCompressorNode {
-    return { connect: noop, disconnect: noop } as unknown as DynamicsCompressorNode;
+    return mockNode<DynamicsCompressorNode>({
+      threshold: mockParam(-24),
+      knee: mockParam(30),
+      ratio: mockParam(12),
+      attack: mockParam(0.003),
+      release: mockParam(0.25),
+    });
   }
   decodeAudioData(_data: ArrayBuffer): Promise<AudioBuffer> {
-    return Promise.resolve({
-      length: 0,
-      duration: 0,
-      sampleRate: 44100,
-      numberOfChannels: 1,
-      getChannelData: () => new Float32Array(0),
-    } as unknown as AudioBuffer);
+    return Promise.resolve(mockBuffer(1, 0, 44100));
   }
   close(): Promise<void> {
     return Promise.resolve();
