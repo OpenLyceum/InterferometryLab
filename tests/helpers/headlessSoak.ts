@@ -38,7 +38,14 @@
  * navigation through the parallel DOM, rendering, and animation-frame timing.
  */
 
-import { BooleanProperty, NumberProperty, Property, type ReadOnlyProperty, StringProperty } from "scenerystack/axon";
+import {
+  BooleanProperty,
+  NumberProperty,
+  Property,
+  type ReadOnlyProperty,
+  StringProperty,
+  stepTimer,
+} from "scenerystack/axon";
 import { Bounds2, Dimension2, Vector2 } from "scenerystack/dot";
 import { localeProperty, type TModel } from "scenerystack/joist";
 import { colorProfileProperty, Node, PressListener } from "scenerystack/scenery";
@@ -254,6 +261,9 @@ function buildActions(
       name: `step ${frames}×${dt}`,
       run: () => {
         for (let f = 0; f < frames; f++) {
+          // Sim emits stepTimer every frame; without it, the release timeout each keyboard
+          // click schedules never fires and pins its PressListener (and button) forever.
+          stepTimer.emit(dt);
           screen.model.step?.(dt);
           screen.view.step?.(dt);
         }
@@ -289,6 +299,9 @@ function normalize(screens: readonly AnyScreen[], exclude: RegExp | undefined): 
     screen.model.step?.(1 / 60);
     screen.view.step?.(1 / 60);
   }
+  // Fire any click-release timeouts still pending, so measurements see what a running sim
+  // would hold rather than the last few presses.
+  stepTimer.emit(1);
   activate(screens, screens[0]!);
 }
 
