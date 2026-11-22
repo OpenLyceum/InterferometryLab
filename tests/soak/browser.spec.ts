@@ -32,7 +32,7 @@
  */
 
 import { writeFile } from "node:fs/promises";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const SOAK_ROUNDS: number = Math.max(5, parseInt(process.env["SOAK_ROUNDS"] || "15", 10) || 15);
 const SOAK_RUN_SECONDS: number = Math.max(5, parseFloat(process.env["SOAK_RUN_SECONDS"] || "20") || 20);
@@ -51,7 +51,12 @@ const FUZZ_MODES: readonly { readonly label: string; readonly query: string }[] 
   { label: "keyboard-fuzz", query: "fuzzBoard" },
 ];
 
-/** Nav-bar buttons are named "<Screen name> Screen"; exclude full-screen toggles. */
+/**
+ * Nav-bar buttons are named "<Screen name> Screen"; exclude full-screen toggles. Always look them up
+ * inside the nav bar's navigation landmark (navBar() below): sims have their own buttons whose
+ * names end in "screen" ("About this screen", "Explain … on the Shielding screen"), and pressing
+ * one of those can open a dialog that hides the nav bar.
+ */
 const SCREEN_BUTTON = /^(?!.*full ?screen).+ screen$/i;
 
 test.use({
@@ -161,15 +166,13 @@ async function soak(
   workload: { warmUp: () => Promise<void>; round: () => Promise<void>; rounds: number },
 ): Promise<void> {
   await workload.warmUp();
-  await forceBrowserGC(page);
-  const baseline = await heapUsed(page);
+  const baseline = await gcAndMeasureHeap(page);
   expect(baseline, `${label}: baseline JSHeapUsedSize`).toBeGreaterThan(0);
 
   const samples: number[] = [];
   for (let i = 0; i < workload.rounds; i++) {
     await workload.round();
-    await forceBrowserGC(page);
-    samples.push(await heapUsed(page));
+    samples.push(await gcAndMeasureHeap(page));
   }
 
   const after = samples[samples.length - 1]!;
@@ -206,14 +209,23 @@ async function screenButtonNames(page: Page): Promise<string[]> {
   await expect(page.getByRole("button", { name: /^(reset all|reset simulation|reset)$/i }).first()).toBeVisible({
     timeout: 30_000,
   });
-  const names = await page
+  const names = await navBar(page)
     .getByRole("button", { name: SCREEN_BUTTON })
     .evaluateAll((buttons) => buttons.map((b) => (b.getAttribute("aria-label") || b.textContent || "").trim()));
   return [...new Set(names.filter((n) => n.length > 0))];
 }
 
+/**
+ * Joist's nav bar wraps the home and screen buttons in the page's only `<nav>`, under a
+ * "Sim Screens" h2. The nav has no accessible name, so match it by role alone. It is hidden
+ * on the home screen and absent in single-screen sims, so lookups there find no buttons.
+ */
+function navBar(page: Page): Locator {
+  return page.getByRole("navigation");
+}
+
 async function goToScreen(page: Page, name: string): Promise<void> {
-  const button = page.getByRole("button", { name, exact: true }).first();
+  const button = navBar(page).getByRole("button", { name, exact: true }).first();
   await button.press("Enter", { timeout: 5_000 });
   // Let the screen switch render and its first animation frames run.
   await animateFor(page, 250);
@@ -259,23 +271,25 @@ function slug(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
-async function forceBrowserGC(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+/**
+ * Force GC and read performance.memory.usedJSHeapSize in ONE page.evaluate. The first passes
+ * yield between collections so weak callbacks and finalizers can run. The last gc() and the read
+ * then run in the same synchronous task, so no animation frame (and no ?fuzz / ?fuzzBoard step)
+ * can allocate between them. With GC and read as separate evaluates the fuzzer kept running in
+ * between, and post-GC samples swung by 2–3× with no real growth.
+ */
+async function gcAndMeasureHeap(page: Page): Promise<number> {
+  const used = await page.evaluate(async () => {
     const gc = (globalThis as unknown as { gc?: () => void }).gc;
     if (!gc) {
       throw new Error("Browser GC unavailable (need --js-flags=--expose-gc)");
     }
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 4; i++) {
       gc();
       await new Promise<void>((r) => setTimeout(r, 20));
     }
-  });
-}
-
-async function heapUsed(page: Page): Promise<number> {
-  // page.metrics() is not in current Playwright typings; precise memory info is
-  // enabled via launch args above and exposed on performance.memory in Chromium.
-  const used = await page.evaluate(() => {
+    gc();
+    // Precise memory info (launch args above) is read live, not from a cached bucket.
     const memory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
     return memory?.usedJSHeapSize ?? 0;
   });
