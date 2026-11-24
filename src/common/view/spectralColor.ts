@@ -1,3 +1,5 @@
+import { roundSymmetric } from "scenerystack/dot";
+
 /**
  * spectralColor.ts
  *
@@ -97,7 +99,7 @@ const gammaTable = ((): Uint8Array => {
   for (let i = 0; i <= GAMMA_TABLE_SIZE; i++) {
     const linear = i / GAMMA_TABLE_SIZE;
     const encoded = linear <= 0.0031308 ? 12.92 * linear : 1.055 * linear ** (1 / 2.4) - 0.055;
-    table[i] = Math.round(255 * Math.min(1, Math.max(0, encoded)));
+    table[i] = roundSymmetric(255 * Math.min(1, Math.max(0, encoded)));
   }
   return table;
 })();

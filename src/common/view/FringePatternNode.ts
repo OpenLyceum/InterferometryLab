@@ -28,8 +28,8 @@ import { FRINGE_PATTERN_NODE_SETTINGS } from "../../InterferometryLabConstants.j
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { Bounds2 } from "scenerystack/dot";
-import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
+import { Bounds2, roundSymmetric } from "scenerystack/dot";
+import { combineOptions, type StrictOmit } from "scenerystack/phet-core";
 import { CanvasNode, type CanvasNodeOptions } from "scenerystack/scenery";
 import { FRINGE_SAMPLES_BROADBAND, FRINGE_SAMPLES_MONOCHROMATIC } from "../../InterferometryLabConstants.js";
 import type { FringeSpec } from "../model/FringeSpec.js";
@@ -57,7 +57,7 @@ type GroupPlan = {
  * Linear sRGB for a wavelength, memoized to the nearest nanometre.
  */
 function linearColor(wavelengthNm: number): readonly [number, number, number] {
-  const key = Math.round(wavelengthNm);
+  const key = roundSymmetric(wavelengthNm);
   const cached = colorCache.get(key);
   if (cached) {
     return cached;
@@ -67,7 +67,7 @@ function linearColor(wavelengthNm: number): readonly [number, number, number] {
   return rgb;
 }
 
-export type FringePatternNodeOptions = CanvasNodeOptions & {
+export type FringePatternNodeOptions = StrictOmit<CanvasNodeOptions, "canvasBounds"> & {
   /** Side length of the square pattern, in view pixels. */
   size: number;
 };
@@ -88,14 +88,11 @@ export class FringePatternNode extends CanvasNode {
   private sampleCount = 0;
 
   public constructor(specProperty: TReadOnlyProperty<FringeSpec>, providedOptions: FringePatternNodeOptions) {
-    const options = optionize<FringePatternNodeOptions, EmptySelfOptions, CanvasNodeOptions>()(
-      { canvasBounds: new Bounds2(0, 0, providedOptions.size, providedOptions.size) },
-      providedOptions,
-    );
-    super(options);
+    const { size, ...canvasOptions } = providedOptions;
+    super(combineOptions<CanvasNodeOptions>({}, canvasOptions, { canvasBounds: new Bounds2(0, 0, size, size) }));
 
     this.specProperty = specProperty;
-    this.size = providedOptions.size;
+    this.size = size;
 
     this.specListener = () => this.invalidatePaint();
     this.specProperty.link(this.specListener);

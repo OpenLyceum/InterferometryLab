@@ -69,7 +69,7 @@ const INTENSITY_GRID_SPACING: number = INTENSITY_PROFILE_NODE_SETTINGS.INTENSITY
  * Stands in for a screen-specific description suffix when a screen has none, so
  * the derivation keeps a fixed dependency list.
  */
-const NO_SUFFIX = new StringProperty("");
+const NoSuffixProperty = new StringProperty("");
 
 /** Detector coordinate of sample `index`, sampled at bin centres like the renderer. */
 function detectorU(index: number): number {
@@ -310,7 +310,7 @@ function describeProfile(
       a11y.intensityProfileFringesStringProperty,
       a11y.intensityProfileFlatStringProperty,
       units.percentStringProperty,
-      suffix ?? NO_SUFFIX,
+      suffix ?? NoSuffixProperty,
     ],
     (spec, fringesPattern, flatText, percentPattern, suffixText) => {
       const values = intensityProfile(spec, SAMPLE_COUNT);

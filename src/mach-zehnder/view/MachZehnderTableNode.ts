@@ -83,8 +83,14 @@ export class MachZehnderTableNode extends Node {
     // The two output beams brighten and dim in antiphase as the path difference
     // changes, which is the clearest statement the drawing can make that the
     // light is being redistributed rather than created or destroyed.
-    const portABrightness = new DerivedProperty([model.portAFractionProperty], (fraction) => 0.25 + 1.5 * fraction);
-    const portBBrightness = new DerivedProperty([model.portBFractionProperty], (fraction) => 0.25 + 1.5 * fraction);
+    const portABrightnessProperty = new DerivedProperty(
+      [model.portAFractionProperty],
+      (fraction) => 0.25 + 1.5 * fraction,
+    );
+    const portBBrightnessProperty = new DerivedProperty(
+      [model.portBFractionProperty],
+      (fraction) => 0.25 + 1.5 * fraction,
+    );
 
     const beams = new Node({
       children: [
@@ -93,8 +99,8 @@ export class MachZehnderTableNode extends Node {
         new BeamPathNode([SPLITTER_IN, MIRROR_UPPER, SPLITTER_OUT], beamColor),
         // Path 2: across the bottom, then up the right side.
         new BeamPathNode([SPLITTER_IN, MIRROR_LOWER, SPLITTER_OUT], beamColor),
-        new BeamPathNode([SPLITTER_OUT, DETECTOR_A], beamColor, { intensityProperty: portABrightness }),
-        new BeamPathNode([SPLITTER_OUT, DETECTOR_B], beamColor, { intensityProperty: portBBrightness }),
+        new BeamPathNode([SPLITTER_OUT, DETECTOR_A], beamColor, { intensityProperty: portABrightnessProperty }),
+        new BeamPathNode([SPLITTER_OUT, DETECTOR_B], beamColor, { intensityProperty: portBBrightnessProperty }),
       ],
     });
 

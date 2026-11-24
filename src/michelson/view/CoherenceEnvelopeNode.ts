@@ -185,7 +185,7 @@ export class CoherenceEnvelopeNode extends VBox {
       spacing: COHERENCE_ENVELOPE_NODE_SETTINGS.CONSTRUCTOR_SPACING,
       align: "center",
       children: [title, chart, axisLabel],
-      accessibleParagraph: description.paragraph,
+      accessibleParagraph: description.paragraphProperty,
     });
 
     this.multilink = multilink;
@@ -195,7 +195,7 @@ export class CoherenceEnvelopeNode extends VBox {
   public override dispose(): void {
     super.dispose();
     this.multilink.dispose();
-    this.description.paragraph.dispose();
+    this.description.paragraphProperty.dispose();
     for (const part of this.description.parts) {
       part.dispose();
     }
@@ -233,7 +233,7 @@ function halfSpan(coherenceLengthNm: number, spectrum: { centerNm: number; doubl
  * description would leave three live listeners holding this node in memory.
  */
 function describeEnvelope(model: MichelsonModel): {
-  readonly paragraph: TReadOnlyProperty<string>;
+  readonly paragraphProperty: TReadOnlyProperty<string>;
   readonly parts: readonly TReadOnlyProperty<string>[];
 } {
   const a11y = StringManager.getInstance().getMichelsonA11yStrings();
@@ -244,11 +244,11 @@ function describeEnvelope(model: MichelsonModel): {
     lengthProperty(model.lightSource.coherenceLengthProperty, 1),
   ] as const;
 
-  const paragraph = new DerivedProperty(
+  const paragraphProperty = new DerivedProperty(
     [a11y.visibilityCurveStringProperty, ...parts],
     (pattern, visibility, pathDifference, coherenceLength) =>
       StringUtils.fillIn(pattern, { visibility, pathDifference, coherenceLength }),
   );
 
-  return { paragraph, parts };
+  return { paragraphProperty, parts };
 }

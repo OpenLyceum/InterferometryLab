@@ -1,0 +1,12 @@
+// Flags Math.round(). Prefer roundSymmetric from scenerystack/dot so positive and
+// negative values round the same way (see phetsims/dot#35).
+// Suppress a deliberate use with: // biome-ignore lint/plugin/no-math-round: <reason>
+language js
+
+`Math.round($value)` as $call where {
+  register_diagnostic(
+    span = $call,
+    message = "Use roundSymmetric(value) from scenerystack/dot instead of Math.round(), which rounds positive and negative numbers differently.",
+    severity = "warn"
+  )
+}

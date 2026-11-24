@@ -15,6 +15,7 @@ import { PHOTON_MARKS_NODE_SETTINGS } from "../../InterferometryLabConstants.js"
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
 import { Bounds2 } from "scenerystack/dot";
+import { combineOptions, type StrictOmit } from "scenerystack/phet-core";
 import { CanvasNode, type CanvasNodeOptions } from "scenerystack/scenery";
 import InterferometryLabColors from "../../InterferometryLabColors.js";
 import type { PhotonMark } from "../model/MachZehnderModel.js";
@@ -24,6 +25,8 @@ const MARK_SIZE: number = PHOTON_MARKS_NODE_SETTINGS.MARK_SIZE;
 
 /** Opacity of one mark, so overlapping detections accumulate. */
 const MARK_OPACITY: number = PHOTON_MARKS_NODE_SETTINGS.MARK_OPACITY;
+
+export type PhotonMarksNodeOptions = StrictOmit<CanvasNodeOptions, "canvasBounds">;
 
 export class PhotonMarksNode extends CanvasNode {
   private readonly marks: readonly PhotonMark[];
@@ -41,9 +44,9 @@ export class PhotonMarksNode extends CanvasNode {
     marks: readonly PhotonMark[],
     revisionProperty: TReadOnlyProperty<number>,
     size: number,
-    providedOptions?: CanvasNodeOptions,
+    providedOptions?: PhotonMarksNodeOptions,
   ) {
-    super({ canvasBounds: new Bounds2(0, 0, size, size), ...providedOptions });
+    super(combineOptions<CanvasNodeOptions>({}, providedOptions, { canvasBounds: new Bounds2(0, 0, size, size) }));
 
     this.marks = marks;
     this.revisionProperty = revisionProperty;
