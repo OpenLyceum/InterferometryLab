@@ -80,5 +80,6 @@
   },
   "allowScripts": {
     "@swc/core@1.16.22": true
-  }
+  },
+  "homepage": "https://openlyceum.github.io/InterferometryLab"
 }
