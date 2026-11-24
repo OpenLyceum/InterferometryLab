@@ -3,7 +3,8 @@
   "assist": {
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": "on",
+        "useSortedPackageJson": "on"
       }
     }
   },
@@ -82,7 +83,9 @@
       "style": {
         "noCommonJs": "error",
         "noDefaultExport": "off",
+        "noEnum": "error",
         "noExportedImports": "warn",
+        "noNamespace": "error",
         "noParameterAssign": "error",
         "preset": "recommended",
         "useBlockStatements": "error",
@@ -98,6 +101,7 @@
             "strictCase": false
           }
         },
+        "useAsConstAssertion": "warn",
         "useForOf": "warn",
         "useImportType": "error",
         "useNamingConvention": {
