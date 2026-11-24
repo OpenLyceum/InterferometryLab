@@ -1,0 +1,13 @@
+// Flags window.innerWidth / window.innerHeight. Prefer Sim.dimensionProperty (or the
+// screen's layoutBounds / visibleBounds) so layout tracks the sim display, not the
+// browser chrome.
+// Suppress a deliberate use with: // biome-ignore lint/plugin/no-window-inner-size: <reason>
+language js
+
+or { `window.innerWidth`, `window.innerHeight` } as $hit where {
+  register_diagnostic(
+    span = $hit,
+    message = "Use Sim.dimensionProperty (or layoutBounds/visibleBounds) instead of window.innerWidth/innerHeight.",
+    severity = "warn"
+  )
+}

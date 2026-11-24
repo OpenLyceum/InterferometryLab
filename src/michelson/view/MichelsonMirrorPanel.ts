@@ -81,14 +81,16 @@ export class MichelsonMirrorPanel extends TitledPanel {
       a11y.resetCountStringProperty,
     );
 
-    const fringeCountText = new DerivedProperty(
+    const fringeCountTextProperty = new DerivedProperty(
       [model.fringeCountProperty, units.plainStringProperty],
       (count, pattern) => StringUtils.fillIn(pattern, { value: toFixed(count, 1) }),
     );
 
     // Path difference is reported once, under the detector; repeating it here
     // would just be a second copy of the same number.
-    const readouts = new ReadoutBlock([{ label: michelson.fringesCountedStringProperty, value: fringeCountText }]);
+    const readouts = new ReadoutBlock([
+      { label: michelson.fringesCountedStringProperty, value: fringeCountTextProperty },
+    ]);
 
     const buttons = new HBox({
       spacing: MICHELSON_MIRROR_PANEL_SETTINGS.BUTTONS_SPACING,

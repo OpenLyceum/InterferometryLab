@@ -174,6 +174,10 @@
       "plugins": [
         "./biome-plugins/no-native-tofixed.grit",
         "./biome-plugins/no-math-random.grit",
+        "./biome-plugins/no-math-round.grit",
+        "./biome-plugins/no-native-timer.grit",
+        "./biome-plugins/no-window-inner-size.grit",
+        "./biome-plugins/require-property-suffix.grit",
         "./biome-plugins/no-hardcoded-text.grit",
         {
           "path": "./biome-plugins/no-inline-color.grit",

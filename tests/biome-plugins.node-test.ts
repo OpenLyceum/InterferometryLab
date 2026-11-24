@@ -63,6 +63,54 @@ test("no-math-random flags Math.random() and leaves dotRandom alone", () => {
   assert.deepEqual(lines(hits, "dotRandom"), [1]);
 });
 
+test("no-math-round flags Math.round() and leaves roundSymmetric alone", () => {
+  const hits = lint({
+    "src/a.ts": "export const a = Math.round(1.5);\nexport const b = roundSymmetric(1.5);\n",
+  });
+  assert.deepEqual(lines(hits, "roundSymmetric"), [1]);
+});
+
+test("no-native-timer flags bare and window timers, allows stepTimer", () => {
+  const hits = lint({
+    "src/a.ts": [
+      "setTimeout(() => {}, 0);",
+      "setInterval(() => {}, 0);",
+      "window.setTimeout(() => {}, 0);",
+      "window.setInterval(() => {}, 0);",
+      "stepTimer.setTimeout(() => {}, 0);",
+      "stepTimer.setInterval(() => {}, 0);",
+      "",
+    ].join("\n"),
+  });
+  assert.deepEqual(lines(hits, "stepTimer"), [1, 2, 3, 4]);
+});
+
+test("no-window-inner-size flags window.innerWidth/Height", () => {
+  const hits = lint({
+    "src/a.ts": "const w = window.innerWidth;\nconst h = window.innerHeight;\nconst d = dimensionProperty;\n",
+  });
+  assert.deepEqual(lines(hits, "dimensionProperty"), [1, 2]);
+});
+
+test("require-property-suffix flags Property bindings without Property suffix", () => {
+  const hits = lint({
+    "src/a.ts": [
+      "const mass = new NumberProperty(1);",
+      "const massProperty = new NumberProperty(1);",
+      "const details = new DerivedProperty([x], (v) => v);",
+      "const detailsProperty = new DerivedProperty([x], (v) => v);",
+      "this.visible = new BooleanProperty(true);",
+      "this.visibleProperty = new BooleanProperty(true);",
+      // Class fields are not reliably matched by Biome GritQL yet.
+      "class D {",
+      "  public readonly ignored = new NumberProperty(0);",
+      "}",
+      "",
+    ].join("\n"),
+  });
+  assert.deepEqual(lines(hits, "Property"), [1, 3, 5]);
+});
+
 test("no-hardcoded-text flags literal display words only", () => {
   const hits = lint({
     "src/a.ts": [
@@ -116,6 +164,9 @@ test("no-inline-color flags hardcoded colors outside *Colors.ts", () => {
 });
 
 test("plugins only run under src/", () => {
-  const hits = lint({ "scripts/a.ts": 'Math.random(); new Text("Mass"); new Color(1, 2, 3);\n' });
+  const hits = lint({
+    "scripts/a.ts":
+      'Math.random(); Math.round(1); setTimeout(() => {}, 0); window.innerWidth; const mass = new NumberProperty(1); new Text("Mass"); new Color(1, 2, 3);\n',
+  });
   assert.deepEqual(hits, []);
 });

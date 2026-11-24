@@ -1,14 +1,8 @@
 {
   "name": "interferometry-lab",
-  "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "private": true,
   "description": "Physical-optics simulation of Michelson, Mach-Zehnder, and Fabry-Perot interferometers: optical path length, phase, coherence, and fringe formation.",
-  "license": "AGPL-3.0-or-later",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/OpenLyceum/InterferometryLab.git"
-  },
   "keywords": [
     "simulation",
     "SceneryStack",
@@ -17,33 +11,45 @@
     "education",
     "pwa"
   ],
+  "homepage": "https://openlyceum.github.io/InterferometryLab",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenLyceum/InterferometryLab.git"
+  },
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
   "scripts": {
-    "start": "vite",
-    "dev": "vite",
     "build": "tsc && vite build",
     "build:single": "tsc && vite build --mode single",
-    "preview": "vite preview",
-    "lint": "biome check --error-on-warnings .",
-    "format": "biome format --write .",
-    "fix": "biome check --write .",
     "check": "tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit && tsc -p tsconfig.test.json --noEmit",
-    "check:unused": "knip",
     "check:architecture": "depcruise src",
-    "release": "npm run check && npm run lint && npm run check:architecture && npm run build && npm test && npm version patch && git push && git push --tags",
-    "watch": "tsc --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:fuzz": "node scripts/test-fuzz.ts",
-    "test:fuzz:quick": "node scripts/test-fuzz.ts 10",
-    "test:fuzz:long": "node scripts/test-fuzz.ts 300",
-    "test:soak": "npm run test:soak:headless && npm run test:soak:browser",
-    "test:soak:headless": "vitest run --config vitest.soak.config.ts",
-    "test:soak:browser": "npx playwright test tests/soak/browser.spec.ts",
-    "icons": "node scripts/generate-icons.ts",
+    "check:unused": "knip",
     "clean": "rm -rf dist",
-    "prepare": "test \"$(git rev-parse --show-toplevel 2>/dev/null)\" = \"$PWD\" && git config core.hooksPath .githooks || true",
+    "dev": "vite",
+    "fix": "biome check --write .",
+    "format": "biome format --write .",
+    "icons": "node scripts/generate-icons.ts",
     "knip": "knip",
-    "test:architecture": "node --test tests/*.node-test.ts"
+    "lint": "biome check --error-on-warnings .",
+    "prepare": "test \"$(git rev-parse --show-toplevel 2>/dev/null)\" = \"$PWD\" && git config core.hooksPath .githooks || true",
+    "preview": "vite preview",
+    "release": "npm run check && npm run lint && npm run check:architecture && npm run build && npm test && npm version patch && git push && git push --tags",
+    "start": "vite",
+    "test": "vitest run",
+    "test:architecture": "node --test tests/*.node-test.ts",
+    "test:fuzz": "node scripts/test-fuzz.ts",
+    "test:fuzz:long": "node scripts/test-fuzz.ts 300",
+    "test:fuzz:quick": "node scripts/test-fuzz.ts 10",
+    "test:soak": "npm run test:soak:headless && npm run test:soak:browser",
+    "test:soak:browser": "npx playwright test tests/soak/browser.spec.ts",
+    "test:soak:headless": "vitest run --config vitest.soak.config.ts",
+    "test:watch": "vitest",
+    "watch": "tsc --watch"
+  },
+  "overrides": {
+    "brace-expansion": "~5.0.12",
+    "lodash": "~4.18.1",
+    "three": "~0.125.2"
   },
   "dependencies": {
     "scenerystack": "^3.0.0"
@@ -66,11 +72,6 @@
   "engines": {
     "node": ">=26"
   },
-  "overrides": {
-    "lodash": "~4.18.1",
-    "three": "~0.125.2",
-    "brace-expansion": "~5.0.12"
-  },
   "devEngines": {
     "runtime": {
       "name": "node",
@@ -80,6 +81,5 @@
   },
   "allowScripts": {
     "@swc/core@1.16.22": true
-  },
-  "homepage": "https://openlyceum.github.io/InterferometryLab"
+  }
 }

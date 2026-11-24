@@ -28,7 +28,7 @@ import { FRINGE_PATTERN_NODE_SETTINGS } from "../../InterferometryLabConstants.j
  */
 
 import type { TReadOnlyProperty } from "scenerystack/axon";
-import { Bounds2 } from "scenerystack/dot";
+import { Bounds2, roundSymmetric } from "scenerystack/dot";
 import { combineOptions, type StrictOmit } from "scenerystack/phet-core";
 import { CanvasNode, type CanvasNodeOptions } from "scenerystack/scenery";
 import { FRINGE_SAMPLES_BROADBAND, FRINGE_SAMPLES_MONOCHROMATIC } from "../../InterferometryLabConstants.js";
@@ -57,7 +57,7 @@ type GroupPlan = {
  * Linear sRGB for a wavelength, memoized to the nearest nanometre.
  */
 function linearColor(wavelengthNm: number): readonly [number, number, number] {
-  const key = Math.round(wavelengthNm);
+  const key = roundSymmetric(wavelengthNm);
   const cached = colorCache.get(key);
   if (cached) {
     return cached;

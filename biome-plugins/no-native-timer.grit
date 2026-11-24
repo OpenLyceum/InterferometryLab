@@ -1,0 +1,18 @@
+// Flags bare setTimeout / setInterval (and window.* forms). Sim code should step
+// from the model/view step(dt) chain, or use stepTimer from scenerystack/axon when a
+// delayed callback is truly needed. Method calls like stepTimer.setTimeout are allowed.
+// Suppress a deliberate use with: // biome-ignore lint/plugin/no-native-timer: <reason>
+language js
+
+or {
+  `setTimeout($...)`,
+  `setInterval($...)`,
+  `window.setTimeout($...)`,
+  `window.setInterval($...)`
+} as $call where {
+  register_diagnostic(
+    span = $call,
+    message = "Do not call setTimeout/setInterval in sim code; step from model/view step(dt), or use stepTimer from scenerystack/axon for a delayed callback.",
+    severity = "warn"
+  )
+}

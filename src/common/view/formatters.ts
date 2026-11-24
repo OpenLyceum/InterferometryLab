@@ -12,7 +12,7 @@ import { FORMATTERS_SETTINGS } from "../../InterferometryLabConstants.js";
  */
 
 import { DerivedProperty, type TReadOnlyProperty } from "scenerystack/axon";
-import { toFixed } from "scenerystack/dot";
+import { roundSymmetric, toFixed } from "scenerystack/dot";
 import { StringUtils } from "scenerystack/phetcommon";
 import { NM_PER_MM, NM_PER_UM } from "../../InterferometryLabConstants.js";
 import { StringManager } from "../../i18n/StringManager.js";
@@ -153,6 +153,6 @@ export function pathDeltaProperty(
 export function countProperty(valueProperty: TReadOnlyProperty<number>): TReadOnlyProperty<string> {
   const units = StringManager.getInstance().getUnits();
   return new DerivedProperty([valueProperty, units.plainStringProperty], (value, pattern) =>
-    StringUtils.fillIn(pattern, { value: Math.round(value).toString() }),
+    StringUtils.fillIn(pattern, { value: roundSymmetric(value).toString() }),
   );
 }

@@ -1,0 +1,35 @@
+// Flags axon Property instances whose binding name does not end in "Property".
+// Covers same-line const/let/var and this.field for the common *Property constructors.
+// Class fields (`public readonly foo = new NumberProperty(...)`, bare `foo = ...`) are
+// not reliably matched by Biome GritQL — rename those in review or with a codemod.
+// Type-only annotations are out of scope (PhET's rule is type-checker based).
+// Suppress a deliberate use with: // biome-ignore lint/plugin/require-property-suffix: <reason>
+// GritQL regexes here must use non-capturing groups (?:...); a plain (...) silently never matches.
+language js
+
+or {
+  `const $name = new $ctor($...)`,
+  `let $name = new $ctor($...)`,
+  `var $name = new $ctor($...)`,
+  `this.$name = new $ctor($...)`
+} as $stmt where {
+  $ctor <: or {
+    `Property`,
+    `BooleanProperty`,
+    `NumberProperty`,
+    `StringProperty`,
+    `DerivedProperty`,
+    `DerivedStringProperty`,
+    `DynamicProperty`,
+    `TinyProperty`,
+    `EnumerationProperty`,
+    `StringUnionProperty`,
+    `ProfileColorProperty`
+  },
+  not $name <: r"(?s)(?:.*(?:Property|PROPERTY)|property|_property)$",
+  register_diagnostic(
+    span = $name,
+    message = "Axon Property bindings must end in \"Property\" (e.g. massProperty, not mass).",
+    severity = "warn"
+  )
+}
