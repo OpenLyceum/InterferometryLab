@@ -1,0 +1,18 @@
+// ScreenView throws if its own PDOM order is set. Child Nodes can set theirs.
+language js
+
+or { `this.pdomOrder = $_`, `this.setPDOMOrder($...)` } as $operation where {
+  $operation <: within or {
+    JsClassDeclaration(extends_clause = JsExtendsClause(super_class = `ScreenView`)),
+    JsClassExpression(extends_clause = JsExtendsClause(super_class = `ScreenView`))
+  } until or {
+    JsClassDeclaration(), JsClassExpression(),
+    JsFunctionDeclaration(), JsFunctionExpression(),
+    JsMethodObjectMember(), JsGetterObjectMember(), JsSetterObjectMember()
+  },
+  register_diagnostic(
+    span = $operation,
+    message = "ScreenView cannot set its own pdomOrder. Set it on a child Node or use pdomPlayAreaNode and pdomControlAreaNode.",
+    severity = "warn"
+  )
+}

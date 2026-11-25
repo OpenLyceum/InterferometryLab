@@ -92,6 +92,37 @@ test("no-window-inner-size flags window.innerWidth/Height", () => {
   assert.deepEqual(lines(hits, "dimensionProperty"), [1, 2]);
 });
 
+test("no-screen-view-pdom-order flags mutations on ScreenView instances", () => {
+  const source = [
+    "export class MainView extends ScreenView {",
+    "  configure() {",
+    "    this.pdomOrder = [control];",
+    "    this.setPDOMOrder([control]);",
+    "    const order = this.pdomOrder;",
+    "    this.addChild(new Node({ pdomOrder: order }));",
+    "    this.pdomControlAreaNode.pdomOrder = order;",
+    "    class Child extends Node {",
+    "      configure() { this.pdomOrder = order; }",
+    "    }",
+    "    function configureOtherNode(this: Node) { this.setPDOMOrder(order); }",
+    "    const other = { configure() { this.pdomOrder = order; } };",
+    "  }",
+    "}",
+    "class OtherNode extends Node {",
+    "  configure() { this.pdomOrder = [control]; this.setPDOMOrder([control]); }",
+    "}",
+    "const InlineView = class extends ScreenView {",
+    "  configure() { this.pdomOrder = [control]; }",
+    "};",
+    "",
+  ].join("\n");
+  const hits = lint({ "src/view/a.ts": source, "scripts/a.ts": source });
+  assert.deepEqual(
+    hits.filter((hit) => hit.message.includes("ScreenView cannot set")).map((hit) => `${hit.path}:${hit.line}`),
+    ["src/view/a.ts:3", "src/view/a.ts:4", "src/view/a.ts:19"],
+  );
+});
+
 test("require-property-suffix flags Property bindings without Property suffix", () => {
   const hits = lint({
     "src/a.ts": [

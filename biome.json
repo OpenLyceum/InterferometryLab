@@ -177,6 +177,7 @@
         "./biome-plugins/no-math-round.grit",
         "./biome-plugins/no-native-timer.grit",
         "./biome-plugins/no-window-inner-size.grit",
+        "./biome-plugins/no-screen-view-pdom-order.grit",
         "./biome-plugins/require-property-suffix.grit",
         "./biome-plugins/no-hardcoded-text.grit",
         {
