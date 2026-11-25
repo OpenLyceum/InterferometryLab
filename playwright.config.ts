@@ -13,7 +13,7 @@ const port = Math.max(1, parseInt(process.env["FUZZ_PORT"] || "5173", 10) || 517
 const fuzzSeconds = Math.max(1, parseInt(process.env["FUZZ_DURATION"] || "30", 10) || 30);
 
 export default defineConfig({
-  testDir: "./tests",
+  testDir: process.env["PLAYWRIGHT_FUZZ_ONLY"] === "1" ? "./tests/fuzz" : "./tests",
   testMatch: "**/*.spec.ts",
   timeout: (fuzzSeconds + 120) * 1000,
   expect: {

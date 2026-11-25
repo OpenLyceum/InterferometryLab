@@ -44,7 +44,8 @@
     "test:soak:browser": "npx playwright test tests/soak/browser.spec.ts",
     "test:soak:headless": "vitest run --config vitest.soak.config.ts",
     "test:watch": "vitest",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "test:browser": "playwright test --project=chromium tests/browser"
   },
   "overrides": {
     "brace-expansion": "~5.0.12",
