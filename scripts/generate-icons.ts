@@ -10,11 +10,10 @@
  * real capture, assets/screenshot.png (the Baton landing-page shot), letterboxed on
  * the theme colour. Otherwise branded placeholders are written only where no
  * screenshot exists yet, so re-running `npm run icons` never clobbers real shots;
- * --placeholder-screenshots overwrites them deliberately.
+ * --placeholder-screenshots overwrites them deliberately. Use --screenshots-only
+ * with --screenshots-from-assets to refresh the pair without rasterizing icons.
  *
- * Template-owned: keep identical across the fleet. The background colour comes from
- * the `theme-color` meta in index.html (which must also match the manifest
- * `theme_color`), so nothing here is sim-specific.
+ * Template-owned. The screenshot background follows sim.config.json themeColor.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -25,6 +24,7 @@ import sharp from "sharp";
 
 const { values: flags } = parseArgs({
   options: {
+    "screenshots-only": { type: "boolean", default: false },
     "screenshots-from-assets": { type: "boolean", default: false },
     "placeholder-screenshots": { type: "boolean", default: false },
   },
@@ -34,36 +34,41 @@ const here = import.meta.dirname;
 const publicDir = resolve(here, "..", "public");
 const svg = readFileSync(resolve(publicDir, "icons", "icon.svg"));
 
-/** Parse the `<meta name="theme-color">` value from index.html into an RGBA background. */
-const readThemeBackground = (): { r: number; g: number; b: number; alpha: number } => {
-  const html = readFileSync(resolve(here, "..", "index.html"), "utf8");
-  const match = /<meta\s+name="theme-color"\s+content="#([0-9a-fA-F]{6})"/.exec(html);
-  if (!match?.[1]) {
-    throw new Error('index.html must declare <meta name="theme-color" content="#rrggbb">');
-  }
-  const n = Number.parseInt(match[1], 16);
-  return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff, alpha: 1 };
-};
+const fromAssets = flags["screenshots-from-assets"];
+const screenshotsOnly = flags["screenshots-only"];
+const capture = resolve(here, "..", "assets", "screenshot.png");
+if (screenshotsOnly && !fromAssets) {
+  throw new Error("--screenshots-only requires --screenshots-from-assets");
+}
+if (fromAssets && !existsSync(capture)) {
+  throw new Error("--screenshots-from-assets needs assets/screenshot.png (Baton/scripts/generate-screenshots.sh)");
+}
 
-/** Theme background matching index.html `theme-color` / manifest `theme_color`. */
-const THEME_BG = readThemeBackground();
+const configPath = resolve(here, "..", "sim.config.json");
+const { themeColor }: { themeColor?: unknown } = JSON.parse(readFileSync(configPath, "utf8"));
+if (typeof themeColor !== "string" || !/^#[0-9a-f]{6}$/i.test(themeColor)) {
+  throw new Error("sim.config.json themeColor must be a #rrggbb color");
+}
+const screenshotBackground: string = themeColor;
 
 const density = 512;
 
-const pngTargets = [
-  { size: 180, file: "icons/apple-touch-icon.png" },
-  { size: 192, file: "icons/icon-192.png" },
-  { size: 512, file: "icons/icon-512.png" },
-];
+if (!screenshotsOnly) {
+  const pngTargets = [
+    { size: 180, file: "icons/apple-touch-icon.png" },
+    { size: 192, file: "icons/icon-192.png" },
+    { size: 512, file: "icons/icon-512.png" },
+  ];
 
-for (const { size, file } of pngTargets) {
-  await sharp(svg, { density }).resize(size, size).png().toFile(resolve(publicDir, file));
+  for (const { size, file } of pngTargets) {
+    await sharp(svg, { density }).resize(size, size).png().toFile(resolve(publicDir, file));
+  }
+
+  const icoBuffers = await Promise.all(
+    [16, 32, 48, 64].map((size) => sharp(svg, { density }).resize(size, size).png().toBuffer()),
+  );
+  writeFileSync(resolve(publicDir, "favicon.ico"), await pngToIco(icoBuffers));
 }
-
-const icoBuffers = await Promise.all(
-  [16, 32, 48, 64].map((size) => sharp(svg, { density }).resize(size, size).png().toBuffer()),
-);
-writeFileSync(resolve(publicDir, "favicon.ico"), await pngToIco(icoBuffers));
 
 /** Branded placeholder screenshots for the Web App Manifest `screenshots` member. */
 async function writeScreenshot(width: number, height: number, file: string): Promise<void> {
@@ -74,7 +79,7 @@ async function writeScreenshot(width: number, height: number, file: string): Pro
       width,
       height,
       channels: 4,
-      background: THEME_BG,
+      background: screenshotBackground,
     },
   })
     .composite([{ input: icon, gravity: "center" }])
@@ -85,18 +90,13 @@ async function writeScreenshot(width: number, height: number, file: string): Pro
 /** A real capture scaled to fit inside width×height, centred on the theme background. */
 async function writeScreenshotFrom(source: string, width: number, height: number, file: string): Promise<void> {
   const fitted = await sharp(source).resize(width, height, { fit: "inside" }).png().toBuffer();
-  await sharp({ create: { width, height, channels: 4, background: THEME_BG } })
+  await sharp({ create: { width, height, channels: 4, background: screenshotBackground } })
     .composite([{ input: fitted, gravity: "center" }])
     .png()
     .toFile(resolve(publicDir, file));
 }
 
-const capture = resolve(here, "..", "assets", "screenshot.png");
-const fromAssets = flags["screenshots-from-assets"];
 const overwriteScreenshots = flags["placeholder-screenshots"];
-if (fromAssets && !existsSync(capture)) {
-  throw new Error("--screenshots-from-assets needs assets/screenshot.png (Baton/scripts/generate-screenshots.sh)");
-}
 mkdirSync(resolve(publicDir, "screenshots"), { recursive: true });
 for (const [width, height, file] of [
   [1280, 720, "screenshots/wide.png"],

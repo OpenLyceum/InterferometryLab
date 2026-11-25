@@ -2,9 +2,8 @@ import type { Plugin, Rolldown } from "vite";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import packageJson from "./package.json" with { type: "json" };
+import { pwaOptions, simMetadataHtml } from "./scripts/pwa-config.js";
 import simConfigJson from "./sim.config.json" with { type: "json" };
-
-const { description, name }: { description: string; name: string } = packageJson;
 
 /**
  * Template-owned: this file must stay identical across the fleet (Baton
@@ -25,6 +24,7 @@ type SimConfig = {
   connectSrc: string[];
   /** Extra file extensions (no dot) for the Workbox precache, e.g. bundled audio. */
   precacheExtensions: string[];
+  pwaId?: string;
 };
 
 const PERMISSION_FEATURES = ["camera", "microphone", "geolocation"] as const;
@@ -39,6 +39,7 @@ const SIM_CONFIG_KEYS: ReadonlySet<string> = new Set([
   "allowPermissions",
   "connectSrc",
   "precacheExtensions",
+  "pwaId",
 ]);
 
 /** Validate `sim.config.json` strictly so a typo or an invented key fails the build instead of being ignored. */
@@ -79,6 +80,9 @@ function parseSimConfig(raw: Record<string, unknown>): SimConfig {
     connectSrc: list("connectSrc", /^https:\/\/[a-z0-9.-]+(?::\d+)?$/, "bare https:// origins (no path, no wildcard)"),
     precacheExtensions: list("precacheExtensions", /^[a-z0-9]{1,8}$/, "lowercase extensions without a dot"),
   };
+  if (raw["pwaId"] !== undefined) {
+    config.pwaId = text("pwaId", /^\/?[a-z0-9][a-z0-9._-]*$/i, "the existing app ID or its root-relative path");
+  }
   if (problems.length > 0) {
     throw new Error(`sim.config.json is invalid:\n  - ${problems.join("\n  - ")}`);
   }
@@ -159,9 +163,6 @@ const securityHeaders: Record<string, string> = {
 /** Single-file mode: inline every imported asset as base64 (effectively unlimited). */
 const INLINE_LIMIT_BYTES = 100 * 1024 * 1024;
 
-/** Workbox precache ceiling — SceneryStack bundles exceed the default 2 MB limit. */
-const WORKBOX_MAX_FILE_BYTES = 12 * 1024 * 1024;
-
 /** Escape a string for literal use inside a `RegExp`. */
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -206,22 +207,6 @@ function inlineAsset(html: string, fileName: string, item: Rolldown.OutputChunk 
   }
 
   return null;
-}
-
-/**
- * Fill `%SIM_DESCRIPTION%` in index.html from package.json, so the page meta tags,
- * the PWA manifest and package.json can never disagree. Runs before Vite's own
- * `%ENV%` replacement (order: "pre").
- */
-function simMetadataHtml(): Plugin {
-  const escaped = description.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-  return {
-    name: "sim-metadata-html",
-    transformIndexHtml: {
-      order: "pre",
-      handler: (html: string): string => html.replaceAll("%SIM_DESCRIPTION%", escaped),
-    },
-  };
 }
 
 /**
@@ -350,76 +335,11 @@ export default defineConfig(({ mode }) => {
       headers: securityHeaders,
     },
     plugins: single
-      ? [simMetadataHtml(), inlineSingleFile()]
+      ? [simMetadataHtml(packageJson.description, simConfig.themeColor), inlineSingleFile()]
       : [
-          simMetadataHtml(),
+          simMetadataHtml(packageJson.description, simConfig.themeColor),
           cspMetaTag(),
-          VitePWA({
-            registerType: "autoUpdate",
-            includeAssets: ["favicon.ico", "icons/apple-touch-icon.png"],
-            manifest: {
-              id: name,
-              name: simConfig.title,
-              // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              short_name: simConfig.shortName,
-              description,
-              categories: ["education", "science"],
-              // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              theme_color: simConfig.themeColor,
-              // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              background_color: simConfig.backgroundColor,
-              display: "standalone",
-              // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              display_override: ["window-controls-overlay", "standalone"],
-              // No `orientation` — leave free so portrait-friendly sims are not forced landscape.
-              icons: [
-                {
-                  src: "icons/icon-192.png",
-                  sizes: "192x192",
-                  type: "image/png",
-                },
-                {
-                  src: "icons/icon-512.png",
-                  sizes: "512x512",
-                  type: "image/png",
-                },
-                {
-                  src: "icons/icon.svg",
-                  sizes: "any",
-                  type: "image/svg+xml",
-                  purpose: "maskable",
-                },
-              ],
-              // Placeholder shots from `npm run icons`; replace with real sim screenshots before shipping.
-              screenshots: [
-                {
-                  src: "screenshots/wide.png",
-                  sizes: "1280x720",
-                  type: "image/png",
-                  // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-                  form_factor: "wide",
-                  label: simConfig.title,
-                },
-                {
-                  src: "screenshots/narrow.png",
-                  sizes: "720x1280",
-                  type: "image/png",
-                  // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-                  form_factor: "narrow",
-                  label: simConfig.title,
-                },
-              ],
-            },
-            workbox: {
-              maximumFileSizeToCacheInBytes: WORKBOX_MAX_FILE_BYTES,
-              // Lets <Pages URL>/<Repo>-single.html (the build:single file Baton's deploy.yml adds
-              // after this build) reach returning visitors instead of the fallback index.html.
-              navigateFallbackDenylist: [/-single\.html$/],
-              globPatterns: [
-                `**/*.{${["js", "css", "html", "svg", "png", "woff2", ...simConfig.precacheExtensions].join(",")}}`,
-              ],
-            },
-          }),
+          VitePWA(pwaOptions(simConfig, packageJson)),
         ],
   };
 });
