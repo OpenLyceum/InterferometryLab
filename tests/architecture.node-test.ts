@@ -45,7 +45,7 @@ function cruise(
       mkdirSync(dirname(join(directory, name)), { recursive: true });
       writeFileSync(join(directory, name), source);
     }
-    const result = spawnSync(process.execPath, [cli, "src", "--output-type", "err"], {
+    const result = spawnSync(process.execPath, [cli, "--config", ".dependency-cruiser.cjs", "src"], {
       cwd: directory,
       encoding: "utf8",
       timeout: 20_000,
@@ -73,6 +73,15 @@ const forbidden: [string, Files][] = [
   ["no-src-to-tests", { "src/main.ts": 'import "../tests/helper.js";', "tests/helper.ts": "export const x = 1;" }],
   ["not-to-dev-dep", { "src/main.test.ts": 'import { test } from "vitest";' }],
   ["no-app-to-bootstrap", { "src/common/helper.ts": 'import "../init.js";', "src/init.ts": "export const x = 1;" }],
+  [
+    "no-root-to-screen",
+    {
+      "src/main.ts": 'import "./intro/Screen.js";',
+      "src/intro/Screen.ts": 'import "../root-helper.js";',
+      "src/root-helper.ts": 'export * from "./lab/Screen.js";',
+      "src/lab/Screen.ts": "export const screen = 1;",
+    },
+  ],
   [
     "no-model-to-view",
     { "src/lab/model/Model.ts": 'import "../view/View.js";', "src/lab/view/View.ts": "export const x = 1;" },
@@ -146,6 +155,15 @@ test("allows bootstrap metadata, same-screen imports, shared models, and type-on
   });
   assert.deepEqual(violations(result), [], result.stdout);
   assert.equal(result.status, 0);
+});
+
+test("uses the fleet config when another default config is present", () => {
+  const result = cruise({
+    ".dependency-cruiser.json": '{ "forbidden": [] }',
+    "src/main.ts": 'import "./missing.js";',
+  });
+  assert.deepEqual(violations(result), ["no-unresolved"], result.stdout);
+  assert.notEqual(result.status, 0);
 });
 
 const source = { "src/main.ts": 'import "./missing.js";' };

@@ -121,6 +121,13 @@ const config = {
       to: { path: "(^|/)view/" },
     },
     {
+      name: "no-root-to-screen",
+      severity: "error",
+      comment: "Only src/main.ts wires screens. Move screen-specific helpers into their screen package.",
+      from: { path: "^src/[^/]+$", pathNot: "^src/main\\.ts$" },
+      to: { path: "^src/[^/]+/", pathNot: `^src/(${SHARED_ROOTS})/` },
+    },
+    {
       name: "no-common-to-screen",
       severity: "error",
       comment:
